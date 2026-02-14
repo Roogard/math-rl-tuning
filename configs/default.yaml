@@ -1,0 +1,151 @@
+# =============================================================================
+# Math RL Tuning — Default Configuration
+# =============================================================================
+# Override any value by passing a custom YAML or by setting environment variables.
+
+# --- Paths ---
+paths:
+  # Where to save SFT training outputs (checkpoints, logs)
+  sft_output_dir: "./outputs/sft"
+  # Where to save the final merged SFT model before RL
+  sft_merged_dir: "./outputs/sft_merged"
+  # Where to save GRPO/RL training outputs
+  grpo_output_dir: "./outputs/grpo"
+  # Where to save evaluation results (JSON/CSV)
+  eval_output_dir: "./outputs/eval"
+  # Google Drive mount point (used only in Colab)
+  drive_mount: "/content/drive"
+  # Google Drive save directory (used only in Colab)
+  drive_save_dir: "/content/drive/MyDrive/math-rl-tuning"
+
+# --- Base Model ---
+model:
+  name: "mistralai/Mistral-7B-Instruct-v0.2"
+  max_seq_length: 2048
+
+# --- Quantization (QLoRA / BitsAndBytes) ---
+quantization:
+  load_in_4bit: true
+  bnb_4bit_quant_type: "nf4"
+  bnb_4bit_compute_dtype: "bfloat16"
+  bnb_4bit_use_double_quant: true
+
+# --- LoRA ---
+lora:
+  # SFT LoRA config
+  sft:
+    r: 16
+    alpha: 64
+    dropout: 0.05
+    bias: "none"
+    task_type: "CAUSAL_LM"
+    target_modules: "all-linear"
+  # GRPO/RL LoRA config (fresh adapter on top of merged SFT)
+  grpo:
+    r: 16
+    alpha: 16
+    dropout: 0.0
+    bias: "none"
+    target_modules:
+      - "q_proj"
+      - "k_proj"
+      - "v_proj"
+      - "o_proj"
+      - "gate_proj"
+      - "up_proj"
+      - "down_proj"
+
+# --- Dataset ---
+dataset:
+  name: "AI-MO/NuminaMath-CoT"
+  # Sources to KEEP for SFT training (cleaner, well-formatted data)
+  sft_keep_sources:
+    - "gsm8k"
+    - "math"
+  # Sources to DROP from test set
+  test_drop_sources:
+    - "olympiads"
+    - "aops_forum"
+    - "synthetic_math"
+    - "amc_aime"
+    - "synthetic_amc"
+    - "math"
+    - "gsm8k"
+  # Sources to DROP from GRPO train set
+  grpo_drop_sources:
+    - "olympiads"
+    - "aops_forum"
+    - "cn_k12"
+    - "orca_math"
+    - "synthetic_math"
+    - "amc_aime"
+    - "synthetic_amc"
+  train_per_source: 6000
+  val_per_source: 1000
+  random_state: 42
+  system_prompt: "Please reason step by step, and put your final answer within \\boxed{}."
+  grpo_system_prompt: "Please reason step by step, and put your final answer within \\boxed{} and put units of measurement where appropriate."
+
+# --- SFT Training ---
+sft_training:
+  num_train_epochs: 1
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 2
+  gradient_accumulation_steps: 4
+  gradient_checkpointing: true
+  fp16: true
+  learning_rate: 2.0e-5
+  lr_scheduler_type: "cosine"
+  warmup_steps: 1
+  logging_steps: 25
+  eval_strategy: "no"
+  neftune_noise_alpha: 5
+  max_length: 2048
+  dataset_text_field: "messages"
+  completion_only_loss: true
+  packing: false
+  dataset_num_proc: 24
+  report_to: "wandb"
+  wandb_project: "AI-MONuminaMath"
+
+# --- GRPO / RL Training ---
+grpo_training:
+  learning_rate: 5.0e-5
+  per_device_train_batch_size: 4
+  gradient_accumulation_steps: 2
+  num_generations: 8
+  max_prompt_length: 256
+  max_completion_length: 2048
+  num_train_epochs: 1
+  report_to: "wandb"
+  use_vllm: true
+  beta: 0.01
+  grpo_sample_size: 800
+  # Unsloth-specific
+  use_unsloth: true
+  gpu_memory_utilization: 0.5
+
+# --- Reward Function ---
+rewards:
+  # Points for generating a long response (encourages reasoning)
+  length_bonus: 0.1
+  length_threshold: 200
+  # Points for using \boxed{} format
+  format_bonus: 0.1
+  # Points for correct answer (exact or symbolic match)
+  correct_bonus: 1.0
+  # Points if ground truth appears anywhere in completion
+  partial_match_bonus: 0.5
+
+# --- Evaluation ---
+evaluation:
+  num_samples: 50
+  max_new_tokens: 512
+  greedy: true
+
+# --- Inference ---
+inference:
+  max_new_tokens: 1024
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true

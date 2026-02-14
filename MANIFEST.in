@@ -1,0 +1,6 @@
+include configs/*.yaml
+include requirements.txt
+include README.md
+include LICENSE
+recursive-include notebooks *.ipynb
+recursive-include scripts *.py

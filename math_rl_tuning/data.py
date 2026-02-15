@@ -209,10 +209,8 @@ def prepare_sft_data(cfg: Config):
     train_ds = Dataset.from_pandas(train_df)
     val_ds = Dataset.from_pandas(val_df)
 
-    # Apply Mistral chat template
-    print("Applying chat template...")
-    train_ds = train_ds.map(apply_mistral_chat_template)
-    val_ds = val_ds.map(apply_mistral_chat_template)
+    # Note: SFTTrainer handles chat template application internally when
+    # dataset_text_field="messages". No manual template step needed here.
 
     return train_ds, val_ds
 

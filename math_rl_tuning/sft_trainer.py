@@ -45,8 +45,18 @@ def setup_tokenizer(tokenizer: AutoTokenizer, max_length: int = 2048):
 
 def build_sft_config(cfg: Config, output_dir: Optional[str] = None) -> SFTConfig:
     """Create a TRL SFTConfig from the project configuration."""
+    from math_rl_tuning.utils import is_bf16_supported
+
     sc = cfg.sft_training
     out = output_dir or cfg.paths.sft_output_dir
+
+    # Auto-detect precision if neither fp16 nor bf16 explicitly set
+    use_bf16 = sc.bf16
+    use_fp16 = sc.fp16
+    if not use_bf16 and not use_fp16:
+        use_bf16 = is_bf16_supported()
+        use_fp16 = not use_bf16
+        print(f"Auto-detected precision: bf16={use_bf16}, fp16={use_fp16}")
 
     # Build WandB run name
     run_name = None
@@ -60,16 +70,17 @@ def build_sft_config(cfg: Config, output_dir: Optional[str] = None) -> SFTConfig
         per_device_eval_batch_size=sc.per_device_eval_batch_size,
         gradient_accumulation_steps=sc.gradient_accumulation_steps,
         gradient_checkpointing=sc.gradient_checkpointing,
-        fp16=sc.fp16,
+        bf16=use_bf16,
+        fp16=use_fp16,
         learning_rate=sc.learning_rate,
         lr_scheduler_type=sc.lr_scheduler_type,
         warmup_steps=sc.warmup_steps,
         logging_steps=sc.logging_steps,
-        logging_dir=os.path.join(out, "logs"),
         eval_strategy=sc.eval_strategy,
         neftune_noise_alpha=sc.neftune_noise_alpha,
         max_length=sc.max_length,
         dataset_text_field=sc.dataset_text_field,
+        completion_only_loss=sc.completion_only_loss,
         packing=sc.packing,
         dataset_num_proc=sc.dataset_num_proc,
         push_to_hub=False,

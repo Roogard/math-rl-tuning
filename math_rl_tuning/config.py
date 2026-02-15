@@ -108,7 +108,8 @@ class SFTTrainingConfig:
     per_device_eval_batch_size: int = 2
     gradient_accumulation_steps: int = 4
     gradient_checkpointing: bool = True
-    fp16: bool = True
+    fp16: bool = False
+    bf16: bool = False
     learning_rate: float = 2e-5
     lr_scheduler_type: str = "cosine"
     warmup_steps: int = 1

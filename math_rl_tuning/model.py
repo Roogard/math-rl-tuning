@@ -34,12 +34,27 @@ _DTYPE_MAP = {
 
 
 def build_bnb_config(cfg: Config) -> BitsAndBytesConfig:
-    """Create a BitsAndBytesConfig from the project config."""
+    """
+    Create a BitsAndBytesConfig from the project config.
+
+    The compute dtype is aligned with the GPU's precision capability:
+    bfloat16 on Ampere+ GPUs, float16 otherwise.  This prevents the
+    fp16 GradScaler from encountering bfloat16 tensors.
+    """
+    from math_rl_tuning.utils import is_bf16_supported
+
     qc = cfg.quantization
+    # Auto-align compute dtype with GPU capability
+    if qc.bnb_4bit_compute_dtype == "auto" or qc.bnb_4bit_compute_dtype == "bfloat16":
+        compute_dtype = torch.bfloat16 if is_bf16_supported() else torch.float16
+    else:
+        compute_dtype = _DTYPE_MAP.get(qc.bnb_4bit_compute_dtype, torch.float16)
+
+    print(f"BnB compute dtype: {compute_dtype}")
     return BitsAndBytesConfig(
         load_in_4bit=qc.load_in_4bit,
         bnb_4bit_quant_type=qc.bnb_4bit_quant_type,
-        bnb_4bit_compute_dtype=_DTYPE_MAP.get(qc.bnb_4bit_compute_dtype, torch.bfloat16),
+        bnb_4bit_compute_dtype=compute_dtype,
         bnb_4bit_use_double_quant=qc.bnb_4bit_use_double_quant,
     )
 

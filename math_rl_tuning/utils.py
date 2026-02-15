@@ -31,6 +31,13 @@ def get_device() -> torch.device:
     return torch.device("cpu")
 
 
+def is_bf16_supported() -> bool:
+    """Check if the current GPU supports bfloat16 (Ampere+ architecture)."""
+    if not torch.cuda.is_available():
+        return False
+    return torch.cuda.is_bf16_supported()
+
+
 # ---------------------------------------------------------------------------
 # Environment / Colab helpers
 # ---------------------------------------------------------------------------

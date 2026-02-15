@@ -43,3 +43,6 @@ logs/
 
 # Data cache
 data_cache/
+
+# Nested repo artifacts
+Math-Rl-Tuning/

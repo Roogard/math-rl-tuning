@@ -93,7 +93,10 @@ sft_training:
   per_device_eval_batch_size: 2
   gradient_accumulation_steps: 4
   gradient_checkpointing: true
-  fp16: true
+  # fp16/bf16: leave both false to auto-detect based on GPU capability.
+  # On Ampere+ GPUs (A100, L4, etc.) bf16 is used; on older GPUs fp16 is used.
+  fp16: false
+  bf16: false
   learning_rate: 2.0e-5
   lr_scheduler_type: "cosine"
   warmup_steps: 1

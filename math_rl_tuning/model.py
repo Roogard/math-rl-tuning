@@ -213,8 +213,16 @@ def merge_adapter(
     print("Merging SFT adapter into base model...")
     base_name = cfg.model.name
 
-    # Load tokenizer from adapter to get correct vocab size
-    tokenizer = AutoTokenizer.from_pretrained(adapter_path)
+    # Load tokenizer — try adapter first, fall back to base model
+    # (some tokenizer configs reference classes that newer/patched
+    #  transformers versions can't resolve, e.g. "TokenizersBackend")
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(adapter_path)
+    except (ValueError, OSError):
+        print(f"  Could not load tokenizer from adapter, using base model")
+        tokenizer = AutoTokenizer.from_pretrained(base_name)
+        if tokenizer.pad_token is None:
+            tokenizer.add_special_tokens({"pad_token": "[PAD]"})
     vocab_size = len(tokenizer)
 
     # Load base model in fp16 for accurate merging

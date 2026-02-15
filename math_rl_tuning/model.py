@@ -277,9 +277,8 @@ def load_unsloth_model(
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=model_path,
         max_seq_length=cfg.model.max_seq_length,
+        dtype=None,
         load_in_4bit=True,
-        fast_inference=for_training,
-        gpu_memory_utilization=gc.gpu_memory_utilization,
     )
 
     if for_training:
@@ -292,7 +291,7 @@ def load_unsloth_model(
             lora_alpha=lc.alpha,
             lora_dropout=lc.dropout,
             bias=lc.bias,
-            use_gradient_checkpointing=False,
+            use_gradient_checkpointing="unsloth",
             random_state=3407,
         )
 

@@ -3,18 +3,28 @@ GRPO (Group Relative Policy Optimization) trainer.
 
 Orchestrates RL-based training on top of a previously SFT-tuned model:
   1. Merge the SFT adapter into the base model
-  2. Load the merged model with standard HF + attach fresh LoRA
-  3. Format GRPO dataset (prompt + ground-truth answer)
-  4. Configure and run TRL's GRPOTrainer with a custom reward function
-  5. Save the RL adapter + tokenizer
-
-Uses the same standard HuggingFace stack as SFT (transformers + peft +
-trl + bitsandbytes).  No unsloth or vLLM required.
+  2. Load the merged model with Unsloth (fast) or standard HF (fallback)
+  3. Attach a fresh LoRA adapter for RL updates
+  4. Format GRPO dataset (prompt + ground-truth answer)
+  5. Configure and run TRL's GRPOTrainer with a custom reward function
+  6. Save the RL adapter + tokenizer
 """
 
 import os
 import shutil
 from typing import Optional, Tuple
+
+# ── CRITICAL IMPORT ORDER ──────────────────────────────────────────────
+# Unsloth MUST be imported BEFORE trl / transformers / peft.
+# It patches internal modules for 2x faster training.
+# If unsloth is not installed we fall back to standard HF.
+# ───────────────────────────────────────────────────────────────────────
+try:
+    from unsloth import FastLanguageModel, PatchFastRL
+    PatchFastRL("GRPO", FastLanguageModel)
+    HAS_UNSLOTH = True
+except ImportError:
+    HAS_UNSLOTH = False
 
 from trl import GRPOTrainer, GRPOConfig
 from datasets import Dataset
@@ -23,6 +33,7 @@ from math_rl_tuning.config import Config
 from math_rl_tuning.model import (
     merge_adapter,
     load_model_and_tokenizer,
+    load_unsloth_model,
     patch_vocab_size,
 )
 from math_rl_tuning.data import prepare_grpo_data
@@ -69,12 +80,13 @@ def run_grpo_training(
     Run the full GRPO reinforcement learning pipeline:
 
     1. Merge SFT adapter into base model (if not already done)
-    2. Load merged model with standard HF + attach fresh LoRA
-    3. Prepare GRPO dataset (if not provided)
-    4. Build reward function
-    5. Run GRPOTrainer
-    6. Save RL adapter + tokenizer
-    7. Optionally copy to Google Drive
+    2. Load merged model (Unsloth if available, else standard HF)
+    3. Attach fresh LoRA adapter for RL
+    4. Prepare GRPO dataset (if not provided)
+    5. Build reward function
+    6. Run GRPOTrainer
+    7. Save RL adapter + tokenizer
+    8. Optionally copy to Google Drive
 
     Args:
         cfg: Project configuration.
@@ -98,13 +110,20 @@ def run_grpo_training(
     merged_path = merge_adapter(cfg, adapter_path=sft_path)
     patch_vocab_size(merged_path)
 
-    # --- Phase 2: Load for RL (standard HF, same stack as SFT) ---
+    # --- Phase 2: Load for RL ---
     print("\n" + "=" * 60)
     print("PHASE 2: Load Model for RL")
     print("=" * 60)
-    model, tokenizer = load_model_and_tokenizer(
-        cfg, stage="grpo", model_path=merged_path
-    )
+    if HAS_UNSLOTH:
+        print("Using Unsloth FastLanguageModel (2x faster training)")
+        model, tokenizer = load_unsloth_model(
+            cfg, model_path=merged_path, for_training=True
+        )
+    else:
+        print("Unsloth not available — using standard HuggingFace")
+        model, tokenizer = load_model_and_tokenizer(
+            cfg, stage="grpo", model_path=merged_path
+        )
 
     # --- Phase 3: Prepare dataset ---
     print("\n" + "=" * 60)

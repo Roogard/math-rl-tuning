@@ -50,6 +50,7 @@ def generate_stream(
     """
     from transformers import TextIteratorStreamer
 
+    model.eval()
     prompt = f"<s>[INST] {question} [/INST]"
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
@@ -65,8 +66,12 @@ def generate_stream(
         pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
     )
 
-    # Run generation in background thread
-    thread = threading.Thread(target=model.generate, kwargs=generation_kwargs)
+    # Run generation in background thread with no gradient tracking
+    def _generate_no_grad():
+        with torch.no_grad():
+            model.generate(**generation_kwargs)
+
+    thread = threading.Thread(target=_generate_no_grad)
     thread.start()
 
     output_text = ""
@@ -102,6 +107,7 @@ def generate(
 
     Returns the model's response (prompt stripped).
     """
+    model.eval()
     prompt = f"<s>[INST] {question} [/INST]"
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 

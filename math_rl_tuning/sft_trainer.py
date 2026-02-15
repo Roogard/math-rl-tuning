@@ -170,6 +170,10 @@ def run_sft_training(
     if save_to_drive:
         _copy_to_drive(save_dir, cfg)
 
+    # Switch to inference mode so callers can generate immediately
+    model.eval()
+    model.config.use_cache = True
+
     return trainer, model, tokenizer
 
 

@@ -23,12 +23,26 @@ from math_rl_tuning.rewards import build_reward_function
 from math_rl_tuning.utils import clean_memory, patch_colab_fileno, is_colab
 
 
+def _ensure_patched():
+    """
+    Ensure Unsloth's PatchFastRL has been called BEFORE any TRL GRPO
+    imports.  Unsloth patches TRL's lazy-loader so that vLLM version
+    mismatches don't cause ImportErrors at import time.
+
+    This must run before ``from trl import GRPOTrainer`` or
+    ``from trl import GRPOConfig``.
+    """
+    from unsloth import FastLanguageModel, PatchFastRL
+    PatchFastRL("GRPO", FastLanguageModel)
+
+
 # ---------------------------------------------------------------------------
 # Build GRPOConfig from project config
 # ---------------------------------------------------------------------------
 
 def build_grpo_config(cfg: Config):
     """Create a TRL GRPOConfig from the project configuration."""
+    _ensure_patched()
     from trl import GRPOConfig
     from math_rl_tuning.utils import is_bf16_supported
 
@@ -83,14 +97,16 @@ def run_grpo_training(
     Returns:
         (trainer, model, tokenizer) — the trained objects.
     """
-    from trl import GRPOTrainer
-    from unsloth import FastLanguageModel, PatchFastRL
-
     sft_path = sft_adapter_path or cfg.paths.sft_output_dir
 
     # --- Colab compatibility patches ---
     patch_colab_fileno()
-    PatchFastRL("GRPO", FastLanguageModel)
+
+    # CRITICAL: Unsloth must patch TRL's lazy-loader BEFORE we import
+    # GRPOTrainer / GRPOConfig, otherwise TRL tries to import from vLLM
+    # with an incompatible API and raises ImportError.
+    _ensure_patched()
+    from trl import GRPOTrainer
 
     # --- Phase 1: Merge SFT adapter ---
     print("=" * 60)

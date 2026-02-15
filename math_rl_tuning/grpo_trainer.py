@@ -30,9 +30,10 @@ from math_rl_tuning.utils import clean_memory, patch_colab_fileno, is_colab
 def build_grpo_config(cfg: Config):
     """Create a TRL GRPOConfig from the project configuration."""
     from trl import GRPOConfig
-    from unsloth import is_bfloat16_supported
+    from math_rl_tuning.utils import is_bf16_supported
 
     gc = cfg.grpo_training
+    use_bf16 = is_bf16_supported()
 
     return GRPOConfig(
         output_dir=cfg.paths.grpo_output_dir,
@@ -45,8 +46,8 @@ def build_grpo_config(cfg: Config):
         num_train_epochs=gc.num_train_epochs,
         report_to=gc.report_to,
         use_vllm=gc.use_vllm,
-        fp16=not is_bfloat16_supported(),
-        bf16=is_bfloat16_supported(),
+        fp16=not use_bf16,
+        bf16=use_bf16,
         beta=gc.beta,
     )
 
@@ -120,13 +121,25 @@ def run_grpo_training(
     reward_fn = build_reward_function(cfg.rewards)
     training_args = build_grpo_config(cfg)
 
-    trainer = GRPOTrainer(
-        model=model,
-        reward_funcs=reward_fn,
-        args=training_args,
-        train_dataset=grpo_dataset,
-        tokenizer=tokenizer,
-    )
+    # TRL 0.24 uses `tokenizer=`, TRL 0.25+ uses `processing_class=`
+    import trl
+    trl_version = tuple(int(x) for x in trl.__version__.split(".")[:2])
+    if trl_version >= (0, 25):
+        trainer = GRPOTrainer(
+            model=model,
+            reward_funcs=reward_fn,
+            args=training_args,
+            train_dataset=grpo_dataset,
+            processing_class=tokenizer,
+        )
+    else:
+        trainer = GRPOTrainer(
+            model=model,
+            reward_funcs=reward_fn,
+            args=training_args,
+            train_dataset=grpo_dataset,
+            tokenizer=tokenizer,
+        )
 
     model.print_trainable_parameters()
     print("Starting GRPO training...")

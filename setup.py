@@ -18,7 +18,7 @@ setup(
         "datasets>=3.0.0",
         "accelerate>=1.4.0",
         "peft>=0.7.1",
-        "trl>=0.25.0",
+        "trl>=0.24.0",
         "bitsandbytes>=0.45.5",
         "safetensors>=0.4.3",
         "sentencepiece>=0.2.0",

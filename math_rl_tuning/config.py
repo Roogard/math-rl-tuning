@@ -135,10 +135,10 @@ class GRPOTrainingConfig:
     max_completion_length: int = 2048
     num_train_epochs: int = 1
     report_to: str = "wandb"
-    use_vllm: bool = True
+    use_vllm: bool = False
     beta: float = 0.01
     grpo_sample_size: int = 800
-    use_unsloth: bool = True
+    use_unsloth: bool = False
     gpu_memory_utilization: float = 0.5
 
 

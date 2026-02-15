@@ -86,6 +86,7 @@ def load_model_and_tokenizer(
     cfg: Config,
     stage: str = "sft",
     inference: bool = False,
+    model_path: Optional[str] = None,
 ) -> Tuple:
     """
     Load base model with QLoRA quantization and attach a LoRA adapter.
@@ -94,14 +95,17 @@ def load_model_and_tokenizer(
         cfg: Project configuration.
         stage: 'sft' or 'grpo' — selects the LoRA config.
         inference: If True, skip LoRA wrapping (for loading a saved adapter later).
+        model_path: Override the model name/path. Defaults to ``cfg.model.name``.
+                    Use this to load a merged model for GRPO.
 
     Returns:
         (model, tokenizer)
     """
     mc = cfg.model
+    name_or_path = model_path or mc.name
 
-    print(f"Loading tokenizer: {mc.name}")
-    tokenizer = AutoTokenizer.from_pretrained(mc.name)
+    print(f"Loading tokenizer: {name_or_path}")
+    tokenizer = AutoTokenizer.from_pretrained(name_or_path)
 
     # Ensure pad token exists
     if tokenizer.pad_token is None:
@@ -110,9 +114,9 @@ def load_model_and_tokenizer(
     # Quantization
     bnb_config = build_bnb_config(cfg)
 
-    print(f"Loading model: {mc.name} (4-bit quantized)")
+    print(f"Loading model: {name_or_path} (4-bit quantized)")
     model = AutoModelForCausalLM.from_pretrained(
-        mc.name,
+        name_or_path,
         quantization_config=bnb_config,
         device_map="auto",
         use_cache=inference,  # disable cache during training

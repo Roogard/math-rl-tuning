@@ -3,37 +3,31 @@ GRPO (Group Relative Policy Optimization) trainer.
 
 Orchestrates RL-based training on top of a previously SFT-tuned model:
   1. Merge the SFT adapter into the base model
-  2. Load the merged model via Unsloth (with vLLM acceleration)
-  3. Attach a fresh LoRA adapter for RL updates
-  4. Format GRPO dataset (prompt + ground-truth answer)
-  5. Configure and run TRL's GRPOTrainer with a custom reward function
-  6. Save the RL adapter + tokenizer
+  2. Load the merged model with standard HF + attach fresh LoRA
+  3. Format GRPO dataset (prompt + ground-truth answer)
+  4. Configure and run TRL's GRPOTrainer with a custom reward function
+  5. Save the RL adapter + tokenizer
+
+Uses the same standard HuggingFace stack as SFT (transformers + peft +
+trl + bitsandbytes).  No unsloth or vLLM required.
 """
 
 import os
 import shutil
 from typing import Optional, Tuple
 
+from trl import GRPOTrainer, GRPOConfig
 from datasets import Dataset
 
 from math_rl_tuning.config import Config
-from math_rl_tuning.model import merge_adapter, load_unsloth_model, patch_vocab_size
+from math_rl_tuning.model import (
+    merge_adapter,
+    load_model_and_tokenizer,
+    patch_vocab_size,
+)
 from math_rl_tuning.data import prepare_grpo_data
 from math_rl_tuning.rewards import build_reward_function
-from math_rl_tuning.utils import clean_memory, patch_colab_fileno, is_colab
-
-
-def _ensure_patched():
-    """
-    Ensure Unsloth's PatchFastRL has been called BEFORE any TRL GRPO
-    imports.  Unsloth patches TRL's lazy-loader so that vLLM version
-    mismatches don't cause ImportErrors at import time.
-
-    This must run before ``from trl import GRPOTrainer`` or
-    ``from trl import GRPOConfig``.
-    """
-    from unsloth import FastLanguageModel, PatchFastRL
-    PatchFastRL("GRPO", FastLanguageModel)
+from math_rl_tuning.utils import clean_memory, patch_colab_fileno, is_colab, is_bf16_supported
 
 
 # ---------------------------------------------------------------------------
@@ -42,10 +36,6 @@ def _ensure_patched():
 
 def build_grpo_config(cfg: Config):
     """Create a TRL GRPOConfig from the project configuration."""
-    _ensure_patched()
-    from trl import GRPOConfig
-    from math_rl_tuning.utils import is_bf16_supported
-
     gc = cfg.grpo_training
     use_bf16 = is_bf16_supported()
 
@@ -59,7 +49,6 @@ def build_grpo_config(cfg: Config):
         max_completion_length=gc.max_completion_length,
         num_train_epochs=gc.num_train_epochs,
         report_to=gc.report_to,
-        use_vllm=gc.use_vllm,
         fp16=not use_bf16,
         bf16=use_bf16,
         beta=gc.beta,
@@ -80,7 +69,7 @@ def run_grpo_training(
     Run the full GRPO reinforcement learning pipeline:
 
     1. Merge SFT adapter into base model (if not already done)
-    2. Load merged model with Unsloth + attach fresh LoRA
+    2. Load merged model with standard HF + attach fresh LoRA
     3. Prepare GRPO dataset (if not provided)
     4. Build reward function
     5. Run GRPOTrainer
@@ -102,12 +91,6 @@ def run_grpo_training(
     # --- Colab compatibility patches ---
     patch_colab_fileno()
 
-    # CRITICAL: Unsloth must patch TRL's lazy-loader BEFORE we import
-    # GRPOTrainer / GRPOConfig, otherwise TRL tries to import from vLLM
-    # with an incompatible API and raises ImportError.
-    _ensure_patched()
-    from trl import GRPOTrainer
-
     # --- Phase 1: Merge SFT adapter ---
     print("=" * 60)
     print("PHASE 1: Merge SFT Adapter")
@@ -115,12 +98,12 @@ def run_grpo_training(
     merged_path = merge_adapter(cfg, adapter_path=sft_path)
     patch_vocab_size(merged_path)
 
-    # --- Phase 2: Load for RL ---
+    # --- Phase 2: Load for RL (standard HF, same stack as SFT) ---
     print("\n" + "=" * 60)
     print("PHASE 2: Load Model for RL")
     print("=" * 60)
-    model, tokenizer = load_unsloth_model(
-        cfg, model_path=merged_path, for_training=True
+    model, tokenizer = load_model_and_tokenizer(
+        cfg, stage="grpo", model_path=merged_path
     )
 
     # --- Phase 3: Prepare dataset ---
@@ -137,25 +120,13 @@ def run_grpo_training(
     reward_fn = build_reward_function(cfg.rewards)
     training_args = build_grpo_config(cfg)
 
-    # TRL 0.24 uses `tokenizer=`, TRL 0.25+ uses `processing_class=`
-    import trl
-    trl_version = tuple(int(x) for x in trl.__version__.split(".")[:2])
-    if trl_version >= (0, 25):
-        trainer = GRPOTrainer(
-            model=model,
-            reward_funcs=reward_fn,
-            args=training_args,
-            train_dataset=grpo_dataset,
-            processing_class=tokenizer,
-        )
-    else:
-        trainer = GRPOTrainer(
-            model=model,
-            reward_funcs=reward_fn,
-            args=training_args,
-            train_dataset=grpo_dataset,
-            tokenizer=tokenizer,
-        )
+    trainer = GRPOTrainer(
+        model=model,
+        reward_funcs=reward_fn,
+        args=training_args,
+        train_dataset=grpo_dataset,
+        processing_class=tokenizer,
+    )
 
     model.print_trainable_parameters()
     print("Starting GRPO training...")

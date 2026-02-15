@@ -121,11 +121,11 @@ grpo_training:
   max_completion_length: 2048
   num_train_epochs: 1
   report_to: "wandb"
-  use_vllm: true
+  use_vllm: false
   beta: 0.01
   grpo_sample_size: 800
   # Unsloth-specific
-  use_unsloth: true
+  use_unsloth: false
   gpu_memory_utilization: 0.5
 
 # --- Reward Function ---

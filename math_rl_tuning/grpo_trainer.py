@@ -128,6 +128,20 @@ def run_grpo_training(
             cfg, stage="grpo", model_path=merged_path
         )
 
+    # ── Tokenizer setup for GRPO batch generation ──────────────────────
+    # GRPO generates multiple completions per prompt in a batch.
+    # Left-padding is required so prompts are right-aligned and the model
+    # can generate continuations.  Without this, it attends to padding
+    # tokens → garbage logits → CUDA device-side assert.
+    tokenizer.padding_side = "left"
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    if hasattr(model, "config"):
+        model.config.pad_token_id = tokenizer.pad_token_id
+    print(f"  padding_side={tokenizer.padding_side}, "
+          f"pad_token_id={tokenizer.pad_token_id}, "
+          f"vocab_size={len(tokenizer)}")
+
     # --- Phase 3: Prepare dataset ---
     print("\n" + "=" * 60)
     print("PHASE 3: Prepare GRPO Dataset")

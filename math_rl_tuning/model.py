@@ -318,23 +318,31 @@ def load_unsloth_model(
 # Vocab size hotfix (for Unsloth config.json mismatch)
 # ---------------------------------------------------------------------------
 
-def patch_vocab_size(model_path: str, vocab_size: int = 32001):
+def patch_vocab_size(model_path: str):
     """
-    Patch config.json to fix vocab_size mismatch that can occur
-    after merging adapters with added tokens.
+    Patch config.json so vocab_size matches the actual tokenizer size.
+
+    After merging adapters with added tokens (e.g. [PAD]), the saved
+    config.json may still have the original vocab_size.  This causes
+    CUDA device-side asserts when generation produces token IDs that
+    exceed the embedding table size.
     """
     config_path = os.path.join(model_path, "config.json")
     if not os.path.exists(config_path):
         print(f"  config.json not found at {model_path} — skipping patch.")
         return
 
+    # Read actual tokenizer size as the source of truth
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    actual_vocab = len(tokenizer)
+
     with open(config_path, "r") as f:
         config = json.load(f)
 
-    if config.get("vocab_size") != vocab_size:
-        print(f"  Patching vocab_size: {config.get('vocab_size')} -> {vocab_size}")
-        config["vocab_size"] = vocab_size
+    if config.get("vocab_size") != actual_vocab:
+        print(f"  Patching vocab_size: {config.get('vocab_size')} -> {actual_vocab}")
+        config["vocab_size"] = actual_vocab
         with open(config_path, "w") as f:
             json.dump(config, f, indent=2)
     else:
-        print(f"  vocab_size already correct ({vocab_size}).")
+        print(f"  vocab_size already correct ({actual_vocab}).")

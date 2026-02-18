@@ -210,6 +210,22 @@ def merge_adapter(
         print(f"Merged model already exists at {save_path} — skipping.")
         return save_path
 
+    # Validate adapter path before expensive model loading
+    adapter_config = os.path.join(adapter_path, "adapter_config.json")
+    if not os.path.isdir(adapter_path):
+        raise FileNotFoundError(
+            f"SFT adapter directory not found: {adapter_path}\n"
+            f"Make sure you ran SFT training (notebook 01) and the adapter "
+            f"was saved/copied to this path."
+        )
+    if not os.path.isfile(adapter_config):
+        contents = os.listdir(adapter_path) if os.path.isdir(adapter_path) else []
+        raise FileNotFoundError(
+            f"No adapter_config.json in {adapter_path}\n"
+            f"Directory contains: {contents}\n"
+            f"This doesn't look like a valid LoRA adapter directory."
+        )
+
     print("Merging SFT adapter into base model...")
     base_name = cfg.model.name
 

@@ -57,6 +57,9 @@ lora:
 
 # --- Dataset ---
 dataset:
+  # GRPO dataset: GSM8K (grade school math — easier, better learning signal)
+  grpo_dataset_name: "openai/gsm8k"
+  # SFT dataset (unchanged)
   name: "AI-MO/NuminaMath-CoT"
   # Sources to KEEP for SFT training (cleaner, well-formatted data)
   sft_keep_sources:
@@ -71,7 +74,7 @@ dataset:
     - "synthetic_amc"
     - "math"
     - "gsm8k"
-  # Sources to DROP from GRPO train set
+  # Sources to DROP from GRPO train set (only used if grpo_dataset_name is NuminaMath)
   grpo_drop_sources:
     - "olympiads"
     - "aops_forum"
@@ -84,7 +87,12 @@ dataset:
   val_per_source: 1000
   random_state: 42
   system_prompt: "Please reason step by step, and put your final answer within \\boxed{}."
-  grpo_system_prompt: "Please reason step by step, and put your final answer within \\boxed{} and put units of measurement where appropriate."
+  grpo_system_prompt: >-
+    You are a mathematical reasoning assistant.
+    When given a math problem:
+    1. Show your step-by-step reasoning between <reasoning> and </reasoning> tags.
+    2. Provide your final numerical answer between <answer> and </answer> tags.
+    Be precise and show all calculation steps clearly.
 
 # --- SFT Training ---
 sft_training:
@@ -113,32 +121,41 @@ sft_training:
 
 # --- GRPO / RL Training ---
 grpo_training:
-  learning_rate: 5.0e-5
-  per_device_train_batch_size: 4
-  gradient_accumulation_steps: 2
+  learning_rate: 5.0e-6
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 8
   num_generations: 8
-  max_prompt_length: 256
-  max_completion_length: 2048
-  num_train_epochs: 1
+  max_prompt_length: 512
+  max_completion_length: 1024
+  num_train_epochs: 3
   report_to: "wandb"
   use_vllm: false
   beta: 0.01
-  grpo_sample_size: 800
+  grpo_sample_size: 7400
+  warmup_ratio: 0.1
+  weight_decay: 0.1
+  max_grad_norm: 0.1
+  lr_scheduler_type: "cosine"
+  logging_steps: 1
   # Unsloth-specific
   use_unsloth: false
   gpu_memory_utilization: 0.5
 
 # --- Reward Function ---
 rewards:
-  # Points for generating a long response (encourages reasoning)
-  length_bonus: 0.1
-  length_threshold: 200
-  # Points for using \boxed{} format
-  format_bonus: 0.1
-  # Points for correct answer (exact or symbolic match)
-  correct_bonus: 1.0
-  # Points if ground truth appears anywhere in completion
-  partial_match_bonus: 0.5
+  # Points for correct answer (exact match)
+  correct_bonus: 3.0
+  # Penalty for wrong answer (negative signal)
+  incorrect_penalty: -0.5
+  # Points for approximate answer (within 10%)
+  approximate_bonus: 1.5
+  # Points for exact XML format compliance
+  format_exact_bonus: 3.0
+  # Per-tag bonus/penalty for approximate format compliance
+  format_tag_bonus: 0.5
+  format_tag_penalty: -0.5
+  # Points for extractable number in <answer> tag
+  number_extraction_bonus: 1.5
 
 # --- Evaluation ---
 evaluation:

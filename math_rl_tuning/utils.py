@@ -147,6 +147,18 @@ def extract_xml_answer(text: str) -> str:
     return answer
 
 
+def extract_xml_tag_answer(text: str) -> Optional[str]:
+    """
+    Extract the content from ``<answer>...</answer>`` XML tags.
+
+    Returns None if no answer tag is found.
+    """
+    match = re.search(r"<answer>(.*?)</answer>", text, flags=re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    return None
+
+
 def normalize_answer(ans: Optional[str]) -> Optional[str]:
     """Strip whitespace and remove common LaTeX wrappers for comparison."""
     if ans is None:

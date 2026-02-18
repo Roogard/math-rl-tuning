@@ -37,7 +37,7 @@ from math_rl_tuning.model import (
     patch_vocab_size,
 )
 from math_rl_tuning.data import prepare_grpo_data
-from math_rl_tuning.rewards import build_reward_function
+from math_rl_tuning.rewards import build_reward_functions
 from math_rl_tuning.utils import clean_memory, patch_colab_fileno, is_colab, is_bf16_supported
 
 
@@ -56,12 +56,18 @@ def build_grpo_config(cfg: Config):
         per_device_train_batch_size=gc.per_device_train_batch_size,
         gradient_accumulation_steps=gc.gradient_accumulation_steps,
         num_generations=gc.num_generations,
+        max_prompt_length=gc.max_prompt_length,
         max_completion_length=gc.max_completion_length,
         num_train_epochs=gc.num_train_epochs,
         report_to=gc.report_to,
         fp16=not use_bf16,
         bf16=use_bf16,
         beta=gc.beta,
+        warmup_ratio=gc.warmup_ratio,
+        weight_decay=gc.weight_decay,
+        max_grad_norm=gc.max_grad_norm,
+        lr_scheduler_type=gc.lr_scheduler_type,
+        logging_steps=gc.logging_steps,
     )
 
 
@@ -135,12 +141,12 @@ def run_grpo_training(
     print("\n" + "=" * 60)
     print("PHASE 4: GRPO Training")
     print("=" * 60)
-    reward_fn = build_reward_function(cfg.rewards)
+    reward_fns = build_reward_functions(cfg.rewards)
     training_args = build_grpo_config(cfg)
 
     trainer = GRPOTrainer(
         model=model,
-        reward_funcs=reward_fn,
+        reward_funcs=reward_fns,
         args=training_args,
         train_dataset=grpo_dataset,
         processing_class=tokenizer,

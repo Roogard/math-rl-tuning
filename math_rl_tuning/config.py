@@ -87,6 +87,7 @@ class LoRAConfig:
 
 @dataclass
 class DatasetConfig:
+    grpo_dataset_name: str = "openai/gsm8k"
     name: str = "AI-MO/NuminaMath-CoT"
     sft_keep_sources: List[str] = field(default_factory=lambda: ["gsm8k", "math"])
     test_drop_sources: List[str] = field(default_factory=list)
@@ -96,8 +97,11 @@ class DatasetConfig:
     random_state: int = 42
     system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}."
     grpo_system_prompt: str = (
-        "Please reason step by step, and put your final answer within "
-        "\\boxed{} and put units of measurement where appropriate."
+        "You are a mathematical reasoning assistant. "
+        "When given a math problem: "
+        "1. Show your step-by-step reasoning between <reasoning> and </reasoning> tags. "
+        "2. Provide your final numerical answer between <answer> and </answer> tags. "
+        "Be precise and show all calculation steps clearly."
     )
 
 
@@ -127,28 +131,35 @@ class SFTTrainingConfig:
 
 @dataclass
 class GRPOTrainingConfig:
-    learning_rate: float = 5e-5
-    per_device_train_batch_size: int = 4
-    gradient_accumulation_steps: int = 2
+    learning_rate: float = 5e-6
+    per_device_train_batch_size: int = 2
+    gradient_accumulation_steps: int = 8
     num_generations: int = 8
-    max_prompt_length: int = 256
-    max_completion_length: int = 2048
-    num_train_epochs: int = 1
+    max_prompt_length: int = 512
+    max_completion_length: int = 1024
+    num_train_epochs: int = 3
     report_to: str = "wandb"
     use_vllm: bool = False
     beta: float = 0.01
-    grpo_sample_size: int = 800
+    grpo_sample_size: int = 7400
+    warmup_ratio: float = 0.1
+    weight_decay: float = 0.1
+    max_grad_norm: float = 0.1
+    lr_scheduler_type: str = "cosine"
+    logging_steps: int = 1
     use_unsloth: bool = False
     gpu_memory_utilization: float = 0.5
 
 
 @dataclass
 class RewardsConfig:
-    length_bonus: float = 0.1
-    length_threshold: int = 200
-    format_bonus: float = 0.1
-    correct_bonus: float = 1.0
-    partial_match_bonus: float = 0.5
+    correct_bonus: float = 3.0
+    incorrect_penalty: float = -0.5
+    approximate_bonus: float = 1.5
+    format_exact_bonus: float = 3.0
+    format_tag_bonus: float = 0.5
+    format_tag_penalty: float = -0.5
+    number_extraction_bonus: float = 1.5
 
 
 @dataclass

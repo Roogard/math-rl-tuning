@@ -14,22 +14,18 @@ import os
 import shutil
 from typing import Optional, Tuple
 
-# ── CRITICAL IMPORT ORDER ──────────────────────────────────────────────
-# Unsloth MUST be imported BEFORE trl / transformers / peft.
-# We use FastLanguageModel for fast model loading + gradient
-# checkpointing (the main 2x speed benefit).
-# NOTE: We intentionally do NOT call PatchFastRL("GRPO") because
-# Unsloth's compiled UnslothGRPOTrainer has a known tensor-shape bug
-# with MistralForCausalLM (github.com/unslothai/unsloth/issues/1958).
-# Vanilla TRL's GRPOTrainer works correctly.
+# ── CRITICAL: import TRL FIRST, before unsloth touches it ─────────────
+# ``import unsloth`` auto-patches trl.GRPOTrainer with
+# UnslothGRPOTrainer, which has a known tensor-shape bug on Mistral
+# (github.com/unslothai/unsloth/issues/1958).
+# We import GRPOTrainer/GRPOConfig from trl NOW — before any unsloth
+# import — so our local binding keeps the vanilla (working) class.
+# Unsloth is only imported lazily inside load_unsloth_model() later.
 # ───────────────────────────────────────────────────────────────────────
-try:
-    from unsloth import FastLanguageModel
-    HAS_UNSLOTH = True
-except ImportError:
-    HAS_UNSLOTH = False
-
 from trl import GRPOTrainer, GRPOConfig
+
+import importlib.util
+HAS_UNSLOTH = importlib.util.find_spec("unsloth") is not None
 from datasets import Dataset
 
 from math_rl_tuning.config import Config

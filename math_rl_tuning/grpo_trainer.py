@@ -16,12 +16,15 @@ from typing import Optional, Tuple
 
 # ── CRITICAL IMPORT ORDER ──────────────────────────────────────────────
 # Unsloth MUST be imported BEFORE trl / transformers / peft.
-# It patches internal modules for 2x faster training.
-# If unsloth is not installed we fall back to standard HF.
+# We use FastLanguageModel for fast model loading + gradient
+# checkpointing (the main 2x speed benefit).
+# NOTE: We intentionally do NOT call PatchFastRL("GRPO") because
+# Unsloth's compiled UnslothGRPOTrainer has a known tensor-shape bug
+# with MistralForCausalLM (github.com/unslothai/unsloth/issues/1958).
+# Vanilla TRL's GRPOTrainer works correctly.
 # ───────────────────────────────────────────────────────────────────────
 try:
-    from unsloth import FastLanguageModel, PatchFastRL
-    PatchFastRL("GRPO", FastLanguageModel)
+    from unsloth import FastLanguageModel
     HAS_UNSLOTH = True
 except ImportError:
     HAS_UNSLOTH = False
@@ -50,7 +53,7 @@ def build_grpo_config(cfg: Config):
     gc = cfg.grpo_training
     use_bf16 = is_bf16_supported()
 
-    config_kwargs = dict(
+    return GRPOConfig(
         output_dir=cfg.paths.grpo_output_dir,
         learning_rate=gc.learning_rate,
         per_device_train_batch_size=gc.per_device_train_batch_size,
@@ -68,14 +71,6 @@ def build_grpo_config(cfg: Config):
         lr_scheduler_type=gc.lr_scheduler_type,
         logging_steps=gc.logging_steps,
     )
-
-    # max_prompt_length was removed in vanilla TRL 0.28 but Unsloth's patched
-    # GRPOConfig still accepts (and requires) it to build the completion mask.
-    import inspect
-    if "max_prompt_length" in inspect.signature(GRPOConfig).parameters:
-        config_kwargs["max_prompt_length"] = gc.max_prompt_length
-
-    return GRPOConfig(**config_kwargs)
 
 
 # ---------------------------------------------------------------------------

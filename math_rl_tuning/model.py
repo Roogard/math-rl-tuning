@@ -263,6 +263,7 @@ def load_unsloth_model(
     cfg: Config,
     model_path: str,
     for_training: bool = True,
+    max_seq_length: Optional[int] = None,
 ) -> Tuple:
     """
     Load a model using Unsloth's FastLanguageModel for GRPO training
@@ -278,13 +279,20 @@ def load_unsloth_model(
     """
     from unsloth import FastLanguageModel
 
-    gc = cfg.grpo_training
     lc = cfg.lora.grpo
 
+    gc = cfg.grpo_training
+    # max_seq_length MUST equal max_prompt_length + max_completion_length.
+    # Unsloth's compiled GRPO kernel pads sequences to max_seq_length but
+    # builds completion_mask up to max_completion_length — if they don't
+    # align you get a tensor size mismatch at masked_batch_mean.
+    seq_len = max_seq_length or (gc.max_prompt_length + gc.max_completion_length)
+
     print(f"Loading model with Unsloth: {model_path}")
+    print(f"  max_seq_length = {seq_len} ({gc.max_prompt_length} prompt + {gc.max_completion_length} completion)")
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=model_path,
-        max_seq_length=cfg.model.max_seq_length,
+        max_seq_length=seq_len,
         dtype=None,
         load_in_4bit=True,
     )

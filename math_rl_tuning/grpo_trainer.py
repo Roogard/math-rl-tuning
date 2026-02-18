@@ -50,13 +50,12 @@ def build_grpo_config(cfg: Config):
     gc = cfg.grpo_training
     use_bf16 = is_bf16_supported()
 
-    return GRPOConfig(
+    config_kwargs = dict(
         output_dir=cfg.paths.grpo_output_dir,
         learning_rate=gc.learning_rate,
         per_device_train_batch_size=gc.per_device_train_batch_size,
         gradient_accumulation_steps=gc.gradient_accumulation_steps,
         num_generations=gc.num_generations,
-        max_prompt_length=gc.max_prompt_length,
         max_completion_length=gc.max_completion_length,
         num_train_epochs=gc.num_train_epochs,
         report_to=gc.report_to,
@@ -69,6 +68,14 @@ def build_grpo_config(cfg: Config):
         lr_scheduler_type=gc.lr_scheduler_type,
         logging_steps=gc.logging_steps,
     )
+
+    # max_prompt_length was removed in vanilla TRL 0.28 but Unsloth's patched
+    # GRPOConfig still accepts (and requires) it to build the completion mask.
+    import inspect
+    if "max_prompt_length" in inspect.signature(GRPOConfig).parameters:
+        config_kwargs["max_prompt_length"] = gc.max_prompt_length
+
+    return GRPOConfig(**config_kwargs)
 
 
 # ---------------------------------------------------------------------------

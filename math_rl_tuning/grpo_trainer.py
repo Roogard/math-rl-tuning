@@ -14,6 +14,7 @@ import importlib.util
 from typing import Optional, Tuple
 
 from trl import GRPOTrainer, GRPOConfig
+from transformers import TrainerCallback
 from datasets import Dataset
 
 from math_rl_tuning.config import Config
@@ -24,10 +25,19 @@ from math_rl_tuning.model import (
     patch_vocab_size,
 )
 from math_rl_tuning.data import prepare_grpo_data
-from math_rl_tuning.rewards import build_reward_functions
+from math_rl_tuning.rewards import build_reward_functions, reward_metrics
 from math_rl_tuning.utils import patch_colab_fileno, is_colab, is_bf16_supported
 
 HAS_UNSLOTH = importlib.util.find_spec("unsloth") is not None
+
+
+class RewardLoggingCallback(TrainerCallback):
+    """Inject per-reward-function means into the training log table."""
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        if logs is not None and reward_metrics:
+            for key, value in reward_metrics.items():
+                logs[f"reward/{key}"] = round(value, 4)
 
 
 def build_grpo_config(cfg: Config):
@@ -108,6 +118,7 @@ def run_grpo_training(
         args=training_args,
         train_dataset=grpo_dataset,
         processing_class=tokenizer,
+        callbacks=[RewardLoggingCallback()],
     )
 
     model.print_trainable_parameters()

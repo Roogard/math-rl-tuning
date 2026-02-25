@@ -33,8 +33,8 @@ def setup_tokenizer(tokenizer: AutoTokenizer, max_length: int = 2048):
     tokenizer.truncation_side = "right"
 
     if tokenizer.pad_token is None:
-        tokenizer.add_special_tokens({"pad_token": "[PAD]"})
-        print(f"Added [PAD] token. Vocab size: {len(tokenizer)}")
+        tokenizer.pad_token = tokenizer.eos_token
+        print(f"Using eos_token as pad_token (id={tokenizer.eos_token_id})")
 
     return tokenizer
 

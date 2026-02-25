@@ -107,9 +107,11 @@ def load_model_and_tokenizer(
     print(f"Loading tokenizer: {name_or_path}")
     tokenizer = AutoTokenizer.from_pretrained(name_or_path)
 
-    # Ensure pad token exists
+    # Ensure pad token exists — use eos_token, do NOT add a new token.
+    # Adding [PAD] resizes embeddings and the new row is randomly
+    # initialized, which causes CUDA asserts when used for padding.
     if tokenizer.pad_token is None:
-        tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+        tokenizer.pad_token = tokenizer.eos_token
 
     # Quantization
     bnb_config = build_bnb_config(cfg)
@@ -229,9 +231,10 @@ def merge_adapter(
     print("Merging SFT adapter into base model...")
     base_name = cfg.model.name
 
-    # Load tokenizer — try adapter first, fall back to base model
-    # (some tokenizer configs reference classes that newer/patched
-    #  transformers versions can't resolve, e.g. "TokenizersBackend")
+    # Load tokenizer — try adapter first, fall back to base model.
+    # The SFT adapter may have added [PAD] (vocab 32001). We MUST match
+    # that vocab size here so PeftModel.from_pretrained doesn't fail on
+    # a lm_head dimension mismatch.
     try:
         tokenizer = AutoTokenizer.from_pretrained(adapter_path)
     except (ValueError, OSError):

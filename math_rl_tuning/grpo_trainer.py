@@ -54,7 +54,6 @@ def build_grpo_config(cfg: Config):
         max_grad_norm=gc.max_grad_norm,
         lr_scheduler_type=gc.lr_scheduler_type,
         logging_steps=gc.logging_steps,
-        max_seq_length=max_seq_length,
         optim=gc.optim,
         adam_beta1=gc.adam_beta1,
         adam_beta2=gc.adam_beta2,

@@ -33,29 +33,26 @@ HAS_UNSLOTH = importlib.util.find_spec("unsloth") is not None
 def build_grpo_config(cfg: Config):
     """Create a TRL GRPOConfig from the project configuration."""
     gc = cfg.grpo_training
-    use_bf16 = is_bf16_supported()
 
     return GRPOConfig(
         output_dir=cfg.paths.grpo_output_dir,
         learning_rate=gc.learning_rate,
+        adam_beta1=gc.adam_beta1,
+        adam_beta2=gc.adam_beta2,
+        weight_decay=gc.weight_decay,
+        warmup_ratio=gc.warmup_ratio,
+        lr_scheduler_type=gc.lr_scheduler_type,
+        optim=gc.optim,
+        logging_steps=gc.logging_steps,
         per_device_train_batch_size=gc.per_device_train_batch_size,
         gradient_accumulation_steps=gc.gradient_accumulation_steps,
         num_generations=gc.num_generations,
         max_prompt_length=gc.max_prompt_length,
         max_completion_length=gc.max_completion_length,
         num_train_epochs=gc.num_train_epochs,
-        report_to=gc.report_to,
-        fp16=not use_bf16,
-        bf16=use_bf16,
-        beta=gc.beta,
-        warmup_ratio=gc.warmup_ratio,
-        weight_decay=gc.weight_decay,
+        save_steps=500,
         max_grad_norm=gc.max_grad_norm,
-        lr_scheduler_type=gc.lr_scheduler_type,
-        logging_steps=gc.logging_steps,
-        optim=gc.optim,
-        adam_beta1=gc.adam_beta1,
-        adam_beta2=gc.adam_beta2,
+        report_to=gc.report_to,
     )
 
 

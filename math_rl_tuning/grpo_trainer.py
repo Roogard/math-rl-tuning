@@ -24,6 +24,7 @@ from math_rl_tuning.model import (
     patch_vocab_size,
 )
 from math_rl_tuning.data import prepare_grpo_data
+from math_rl_tuning.rewards import build_reward_functions
 from math_rl_tuning.utils import patch_colab_fileno, is_colab, is_bf16_supported
 
 HAS_UNSLOTH = importlib.util.find_spec("unsloth") is not None

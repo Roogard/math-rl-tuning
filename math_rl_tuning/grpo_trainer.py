@@ -13,12 +13,6 @@ import shutil
 import importlib.util
 from typing import Optional, Tuple
 
-# Unsloth MUST be imported before trl/transformers/peft so it can patch them
-# with optimizations (including reward metric logging in the training table).
-HAS_UNSLOTH = importlib.util.find_spec("unsloth") is not None
-if HAS_UNSLOTH:
-    import unsloth  # noqa: F401 — triggers monkey-patching
-
 from trl import GRPOTrainer, GRPOConfig
 from datasets import Dataset
 
@@ -32,6 +26,8 @@ from math_rl_tuning.model import (
 from math_rl_tuning.data import prepare_grpo_data
 from math_rl_tuning.rewards import build_reward_functions
 from math_rl_tuning.utils import patch_colab_fileno, is_colab, is_bf16_supported
+
+HAS_UNSLOTH = importlib.util.find_spec("unsloth") is not None
 
 
 def build_grpo_config(cfg: Config):

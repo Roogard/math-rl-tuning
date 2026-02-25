@@ -21,7 +21,7 @@ paths:
 # --- Base Model ---
 model:
   name: "mistralai/Mistral-7B-Instruct-v0.2"
-  max_seq_length: 2048
+  max_seq_length: 1024
 
 # --- Quantization (QLoRA / BitsAndBytes) ---
 quantization:
@@ -41,9 +41,10 @@ lora:
     task_type: "CAUSAL_LM"
     target_modules: "all-linear"
   # GRPO/RL LoRA config (fresh adapter on top of merged SFT)
+  # Matches official Unsloth Mistral GRPO notebook: r=32, alpha=r
   grpo:
-    r: 16
-    alpha: 16
+    r: 32
+    alpha: 32
     dropout: 0.0
     bias: "none"
     target_modules:
@@ -87,12 +88,14 @@ dataset:
   val_per_source: 1000
   random_state: 42
   system_prompt: "Please reason step by step, and put your final answer within \\boxed{}."
-  grpo_system_prompt: >-
-    You are a mathematical reasoning assistant.
-    When given a math problem:
-    1. Show your step-by-step reasoning between <reasoning> and </reasoning> tags.
-    2. Provide your final numerical answer between <answer> and </answer> tags.
-    Be precise and show all calculation steps clearly.
+  grpo_system_prompt: |
+    Respond in the following format:
+    <reasoning>
+    ...
+    </reasoning>
+    <answer>
+    ...
+    </answer>
 
 # --- SFT Training ---
 sft_training:
@@ -121,10 +124,16 @@ sft_training:
 
 # --- GRPO / RL Training ---
 grpo_training:
-  learning_rate: 5.0e-6
-  per_device_train_batch_size: 2
-  gradient_accumulation_steps: 8
-  num_generations: 4
+  learning_rate: 5e-6
+  adam_beta1: 0.9
+  adam_beta2: 0.99
+  warmup_ratio: 0.1
+  weight_decay: 0.1
+  lr_scheduler_type: "cosine"
+  optim: "paged_adamw_8bit"
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 4
+  num_generations: 6
   max_prompt_length: 512
   max_completion_length: 256
   num_train_epochs: 3
@@ -132,10 +141,7 @@ grpo_training:
   use_vllm: false
   beta: 0.01
   grpo_sample_size: 7400
-  warmup_ratio: 0.1
-  weight_decay: 0.1
   max_grad_norm: 0.1
-  lr_scheduler_type: "cosine"
   logging_steps: 1
   # Unsloth-specific
   use_unsloth: false

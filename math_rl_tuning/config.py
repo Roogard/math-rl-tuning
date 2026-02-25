@@ -79,7 +79,7 @@ class LoRASubConfig:
 class LoRAConfig:
     sft: LoRASubConfig = field(default_factory=LoRASubConfig)
     grpo: LoRASubConfig = field(default_factory=lambda: LoRASubConfig(
-        r=16, alpha=16, dropout=0.0, bias="none", task_type="CAUSAL_LM",
+        r=32, alpha=32, dropout=0.0, bias="none", task_type="CAUSAL_LM",
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
                         "gate_proj", "up_proj", "down_proj"],
     ))
@@ -97,11 +97,9 @@ class DatasetConfig:
     random_state: int = 42
     system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}."
     grpo_system_prompt: str = (
-        "You are a mathematical reasoning assistant. "
-        "When given a math problem: "
-        "1. Show your step-by-step reasoning between <reasoning> and </reasoning> tags. "
-        "2. Provide your final numerical answer between <answer> and </answer> tags. "
-        "Be precise and show all calculation steps clearly."
+        "\nRespond in the following format:\n"
+        "<reasoning>\n...\n</reasoning>\n"
+        "<answer>\n...\n</answer>\n"
     )
 
 
@@ -132,20 +130,23 @@ class SFTTrainingConfig:
 @dataclass
 class GRPOTrainingConfig:
     learning_rate: float = 5e-6
-    per_device_train_batch_size: int = 2
-    gradient_accumulation_steps: int = 8
-    num_generations: int = 8
+    adam_beta1: float = 0.9
+    adam_beta2: float = 0.99
+    warmup_ratio: float = 0.1
+    weight_decay: float = 0.1
+    lr_scheduler_type: str = "cosine"
+    optim: str = "paged_adamw_8bit"
+    per_device_train_batch_size: int = 1
+    gradient_accumulation_steps: int = 4
+    num_generations: int = 6
     max_prompt_length: int = 512
-    max_completion_length: int = 1024
+    max_completion_length: int = 256
     num_train_epochs: int = 3
     report_to: str = "wandb"
     use_vllm: bool = False
     beta: float = 0.01
     grpo_sample_size: int = 7400
-    warmup_ratio: float = 0.1
-    weight_decay: float = 0.1
     max_grad_norm: float = 0.1
-    lr_scheduler_type: str = "cosine"
     logging_steps: int = 1
     use_unsloth: bool = False
     gpu_memory_utilization: float = 0.5

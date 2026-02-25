@@ -142,63 +142,48 @@ def _extract_gsm8k_answer(text: str) -> str:
 
 def format_grpo_prompt_gsm8k(
     example: dict,
-    tokenizer,
     system_prompt: str,
 ) -> dict:
     """
     Format a GSM8K example for GRPO training.
 
     Returns a dict with:
-      - ``prompt``: conversation-formatted prompt (system + user)
+      - ``prompt``: list of message dicts (TRL applies chat template)
       - ``answer``: the extracted ground-truth numerical answer
+
+    NOTE: prompt MUST be message dicts, not a pre-rendered string.
+    TRL's GRPOTrainer applies the chat template internally.
+    Passing a pre-rendered string causes double-templating issues.
     """
-    question = example["question"]
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": question},
-    ]
-
-    prompt_text = tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True,
-    )
-
-    ground_truth = _extract_gsm8k_answer(example["answer"])
-
-    return {"prompt": prompt_text, "answer": ground_truth}
+    return {
+        "prompt": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": example["question"]},
+        ],
+        "answer": _extract_gsm8k_answer(example["answer"]),
+    }
 
 
 def format_grpo_prompt_numina(
     example: dict,
-    tokenizer,
     system_prompt: str,
 ) -> dict:
     """
     Format a NuminaMath example for GRPO training.
 
     Returns a dict with:
-      - ``prompt``: conversation-formatted prompt (system + user)
+      - ``prompt``: list of message dicts (TRL applies chat template)
       - ``answer``: the extracted ground-truth answer from \\boxed{}
     """
     from math_rl_tuning.utils import extract_xml_answer
 
-    raw_problem = example["problem"]
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": raw_problem},
-    ]
-
-    prompt_text = tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True,
-    )
-
-    ground_truth = example["solution"]
-    ground_truth = extract_xml_answer(ground_truth)
-
-    return {"prompt": prompt_text, "answer": ground_truth}
+    return {
+        "prompt": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": example["problem"]},
+        ],
+        "answer": extract_xml_answer(example["solution"]),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -256,7 +241,7 @@ def prepare_sft_data(cfg: Config):
 # High-level convenience: prepare everything for GRPO
 # ---------------------------------------------------------------------------
 
-def prepare_grpo_data(cfg: Config, tokenizer):
+def prepare_grpo_data(cfg: Config, tokenizer=None):
     """
     End-to-end data preparation for GRPO training.
 
@@ -265,19 +250,19 @@ def prepare_grpo_data(cfg: Config, tokenizer):
 
     Returns a shuffled HuggingFace ``Dataset`` of size
     ``cfg.grpo_training.grpo_sample_size`` with ``prompt`` and ``answer``
-    columns.
+    columns.  ``prompt`` is a list of message dicts (not a string).
     """
     dc = cfg.dataset
     gc = cfg.grpo_training
     grpo_ds_name = getattr(dc, "grpo_dataset_name", "openai/gsm8k")
 
     if "gsm8k" in grpo_ds_name.lower():
-        return _prepare_grpo_gsm8k(dc, gc, tokenizer)
+        return _prepare_grpo_gsm8k(dc, gc)
     else:
-        return _prepare_grpo_numina(dc, gc, tokenizer)
+        return _prepare_grpo_numina(dc, gc)
 
 
-def _prepare_grpo_gsm8k(dc, gc, tokenizer):
+def _prepare_grpo_gsm8k(dc, gc):
     """Load and format GSM8K for GRPO training."""
     print(f"Loading GSM8K dataset for GRPO...")
     ds = load_dataset(dc.grpo_dataset_name, "main")
@@ -287,7 +272,7 @@ def _prepare_grpo_gsm8k(dc, gc, tokenizer):
     print("Formatting prompts...")
 
     dataset = train_ds.map(
-        lambda ex: format_grpo_prompt_gsm8k(ex, tokenizer, dc.grpo_system_prompt),
+        lambda ex: format_grpo_prompt_gsm8k(ex, dc.grpo_system_prompt),
         remove_columns=train_ds.column_names,
     )
 
@@ -299,7 +284,7 @@ def _prepare_grpo_gsm8k(dc, gc, tokenizer):
     return dataset
 
 
-def _prepare_grpo_numina(dc, gc, tokenizer):
+def _prepare_grpo_numina(dc, gc):
     """Load and format NuminaMath-CoT for GRPO training (fallback)."""
     print("Loading NuminaMath dataset for GRPO...")
     ds = load_numina_dataset(dc.name)
@@ -312,7 +297,7 @@ def _prepare_grpo_numina(dc, gc, tokenizer):
     print("Formatting prompts...")
 
     dataset = train_ds.map(
-        lambda ex: format_grpo_prompt_numina(ex, tokenizer, dc.grpo_system_prompt),
+        lambda ex: format_grpo_prompt_numina(ex, dc.grpo_system_prompt),
         remove_columns=train_ds.column_names,
     )
 

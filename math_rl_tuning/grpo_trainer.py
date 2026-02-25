@@ -34,6 +34,7 @@ def build_grpo_config(cfg: Config):
     """Create a TRL GRPOConfig from the project configuration."""
     gc = cfg.grpo_training
     use_bf16 = is_bf16_supported()
+    max_seq_length = cfg.model.max_seq_length
 
     return GRPOConfig(
         output_dir=cfg.paths.grpo_output_dir,
@@ -42,7 +43,7 @@ def build_grpo_config(cfg: Config):
         gradient_accumulation_steps=gc.gradient_accumulation_steps,
         num_generations=gc.num_generations,
         max_prompt_length=gc.max_prompt_length,
-        max_completion_length=gc.max_completion_length,
+        max_completion_length= max_seq_length - gc.max_prompt_length,
         num_train_epochs=gc.num_train_epochs,
         report_to=gc.report_to,
         fp16=not use_bf16,
@@ -53,6 +54,10 @@ def build_grpo_config(cfg: Config):
         max_grad_norm=gc.max_grad_norm,
         lr_scheduler_type=gc.lr_scheduler_type,
         logging_steps=gc.logging_steps,
+        max_seq_length=max_seq_length,
+        optim=gc.optim,
+        adam_beta1=gc.adam_beta1,
+        adam_beta2=gc.adam_beta2,
     )
 
 
@@ -87,17 +92,6 @@ def run_grpo_training(
         model, tokenizer = load_model_and_tokenizer(
             cfg, stage="grpo", model_path=merged_path
         )
-
-    # FIX: Always use eos_token as pad_token.
-    # The merge step may have added a [PAD] token with randomly initialized
-    # embeddings. Using it for left-padding feeds NaN/garbage into the model
-    # on every forward pass → CUDA device-side assert during generation.
-    tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.pad_token_id = tokenizer.eos_token_id
-    tokenizer.padding_side = "left"
-    if hasattr(model, "config"):
-        model.config.pad_token_id = tokenizer.eos_token_id
-    print(f"  pad_token=eos ({tokenizer.eos_token_id}), padding_side=left")
 
     # --- Phase 3: Prepare dataset ---
     print("\n" + "=" * 60)

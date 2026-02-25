@@ -1,13 +1,16 @@
 """
 Reward functions for GRPO reinforcement learning.
 
-Four separate reward functions that evaluate different aspects:
-  1. Exact format compliance  — full XML structure match
-  2. Approximate format       — per-tag presence/absence scoring
-  3. Answer correctness       — exact match, approximate, or wrong (with penalty)
-  4. Number extraction        — can the model produce a parseable number?
+Matches the official Unsloth Mistral GRPO notebook pattern.
+TRL passes completions as list of list of message dicts:
+    completions = [[{"role": "assistant", "content": "..."}], ...]
 
-All functions use <reasoning>...</reasoning> and <answer>...</answer> XML tags.
+Five reward functions (matching official notebook):
+  1. correctness  — exact match of extracted answer (2.0 if correct)
+  2. int_check    — is the extracted answer an integer? (0.5)
+  3. strict_format — perfect XML structure (0.5)
+  4. soft_format   — relaxed XML structure (0.5)
+  5. xmlcount      — graduated per-tag scoring (up to 0.5)
 """
 
 import re
@@ -16,169 +19,95 @@ from typing import List
 from math_rl_tuning.config import RewardsConfig
 
 
-# ---------------------------------------------------------------------------
-# Compiled regex patterns (module-level for efficiency)
-# ---------------------------------------------------------------------------
-
-# Full format: optional whitespace, <reasoning>...</reasoning>, <answer>...</answer>
-_FULL_FORMAT_RE = re.compile(
-    r"^\s*<reasoning>.+?</reasoning>\s*<answer>(.+?)</answer>\s*$",
-    flags=re.DOTALL,
-)
-
-# Extract number(s) from inside <answer>...</answer>
-_ANSWER_NUMBER_RE = re.compile(
-    r"<answer>.*?([\d,]+\.?\d*)\s*</answer>",
-    flags=re.DOTALL,
-)
+def _extract_xml_answer(text: str) -> str:
+    """Extract content from <answer>...</answer> tags."""
+    answer = text.split("<answer>")[-1]
+    answer = answer.split("</answer>")[0]
+    return answer.strip()
 
 
-def _normalize_number(s: str) -> str:
-    """Strip commas and surrounding whitespace from a number string."""
-    return s.replace(",", "").strip()
+def _get_content(completion) -> str:
+    """Extract text content from a completion (message dict or string)."""
+    if isinstance(completion, list):
+        return completion[0]["content"]
+    if isinstance(completion, dict):
+        return completion["content"]
+    return str(completion)
 
 
 # ---------------------------------------------------------------------------
-# Reward Function 1: Exact Format Compliance
+# Reward functions (matching official Unsloth notebook)
 # ---------------------------------------------------------------------------
 
-def reward_format_exact(completions, rewards_cfg: RewardsConfig, **kwargs) -> List[float]:
+def correctness_reward_func(prompts, completions, answer, **kwargs) -> list[float]:
+    """Exact match of extracted answer vs ground truth."""
+    responses = [_get_content(c) for c in completions]
+    extracted = [_extract_xml_answer(r) for r in responses]
+    return [2.0 if r == a else 0.0 for r, a in zip(extracted, answer)]
+
+
+def int_reward_func(completions, **kwargs) -> list[float]:
+    """Check if extracted answer is a pure integer."""
+    responses = [_get_content(c) for c in completions]
+    extracted = [_extract_xml_answer(r) for r in responses]
+    return [0.5 if r.isdigit() else 0.0 for r in extracted]
+
+
+def strict_format_reward_func(completions, **kwargs) -> list[float]:
+    """Exact XML format: <reasoning>\\n...\\n</reasoning>\\n<answer>\\n...\\n</answer>\\n"""
+    pattern = r"^<reasoning>\n.*?\n</reasoning>\n<answer>\n.*?\n</answer>\n$"
+    responses = [_get_content(c) for c in completions]
+    matches = [re.match(pattern, r, re.DOTALL) for r in responses]
+    return [0.5 if match else 0.0 for match in matches]
+
+
+def soft_format_reward_func(completions, **kwargs) -> list[float]:
+    """Relaxed XML format: <reasoning>...</reasoning> then <answer>...</answer>"""
+    pattern = r"<reasoning>.*?</reasoning>\s*<answer>.*?</answer>"
+    responses = [_get_content(c) for c in completions]
+    matches = [re.match(pattern, r, re.DOTALL) for r in responses]
+    return [0.5 if match else 0.0 for match in matches]
+
+
+def _count_xml(text: str) -> float:
+    """Graduated scoring for individual XML tags."""
+    count = 0.0
+    if text.count("<reasoning>\n") == 1:
+        count += 0.125
+    if text.count("\n</reasoning>\n") == 1:
+        count += 0.125
+    if text.count("\n<answer>\n") == 1:
+        count += 0.125
+        count -= len(text.split("\n</answer>\n")[-1]) * 0.001
+    if text.count("\n</answer>") == 1:
+        count += 0.125
+        count -= (len(text.split("\n</answer>")[-1]) - 1) * 0.001
+    return count
+
+
+def xmlcount_reward_func(completions, **kwargs) -> list[float]:
+    """Graduated XML tag scoring."""
+    contents = [_get_content(c) for c in completions]
+    return [_count_xml(c) for c in contents]
+
+
+# ---------------------------------------------------------------------------
+# Build reward function list for GRPOTrainer
+# ---------------------------------------------------------------------------
+
+def build_reward_functions(rewards_cfg: RewardsConfig = None):
     """
-    High reward for perfect XML structure compliance.
-    Ensures the model learns the complete structured output pattern.
-    """
-    scores = []
-    for completion in completions:
-        if _FULL_FORMAT_RE.search(completion) is not None:
-            scores.append(rewards_cfg.format_exact_bonus)
-        else:
-            scores.append(0.0)
-    return scores
-
-
-# ---------------------------------------------------------------------------
-# Reward Function 2: Approximate Format (per-tag scoring)
-# ---------------------------------------------------------------------------
-
-def reward_format_approximate(completions, rewards_cfg: RewardsConfig, **kwargs) -> List[float]:
-    """
-    Graduated scoring for individual XML tag presence.
-    Encourages learning components even when the full pattern isn't perfect.
-    """
-    scores = []
-    for completion in completions:
-        score = 0.0
-        for tag in ["<reasoning>", "</reasoning>", "<answer>", "</answer>"]:
-            if completion.count(tag) == 1:
-                score += rewards_cfg.format_tag_bonus
-            else:
-                score += rewards_cfg.format_tag_penalty
-        scores.append(score)
-    return scores
-
-
-# ---------------------------------------------------------------------------
-# Reward Function 3: Answer Correctness
-# ---------------------------------------------------------------------------
-
-def reward_correctness(completions, answer, rewards_cfg: RewardsConfig, **kwargs) -> List[float]:
-    """
-    Graduated scoring for mathematical accuracy:
-      - Exact match      → correct_bonus
-      - Within 10%       → approximate_bonus
-      - Wrong / no answer → incorrect_penalty
-    """
-    scores = []
-    for completion, truth in zip(completions, answer):
-        truth_str = str(truth).strip()
-
-        # Try to extract the answer from <answer>...</answer>
-        fmt_match = _FULL_FORMAT_RE.search(completion)
-        guess = fmt_match.group(1).strip() if fmt_match else None
-
-        if guess is None:
-            scores.append(0.0)
-            continue
-
-        # Exact string match
-        if _normalize_number(guess) == _normalize_number(truth_str):
-            scores.append(rewards_cfg.correct_bonus)
-            continue
-
-        # Numerical approximate match
-        try:
-            guess_val = float(_normalize_number(guess))
-            truth_val = float(_normalize_number(truth_str))
-            if truth_val != 0:
-                ratio = guess_val / truth_val
-                if 0.9 <= ratio <= 1.1:
-                    scores.append(rewards_cfg.approximate_bonus)
-                    continue
-        except (ValueError, ZeroDivisionError):
-            pass
-
-        # Wrong answer — apply penalty
-        scores.append(rewards_cfg.incorrect_penalty)
-
-    return scores
-
-
-# ---------------------------------------------------------------------------
-# Reward Function 4: Number Extraction
-# ---------------------------------------------------------------------------
-
-def reward_number_extraction(completions, answer, rewards_cfg: RewardsConfig, **kwargs) -> List[float]:
-    """
-    Tests the model's ability to produce a parseable number inside <answer> tags.
-    Complementary to exact format — focuses on numerical output capability.
-    """
-    scores = []
-    for completion, truth in zip(completions, answer):
-        truth_str = str(truth).strip()
-
-        num_match = _ANSWER_NUMBER_RE.search(completion)
-        if num_match is None:
-            scores.append(0.0)
-            continue
-
-        try:
-            guess_val = float(_normalize_number(num_match.group(1)))
-            truth_val = float(_normalize_number(truth_str))
-            if guess_val == truth_val:
-                scores.append(rewards_cfg.number_extraction_bonus)
-            else:
-                scores.append(0.0)
-        except (ValueError, TypeError):
-            scores.append(0.0)
-
-    return scores
-
-
-# ---------------------------------------------------------------------------
-# Build all reward functions for GRPOTrainer
-# ---------------------------------------------------------------------------
-
-def build_reward_functions(rewards_cfg: RewardsConfig):
-    """
-    Return a list of reward function closures compatible with TRL's
-    GRPOTrainer ``reward_funcs`` parameter.
+    Return list of reward functions matching the official Unsloth notebook.
 
     Usage::
 
         reward_fns = build_reward_functions(cfg.rewards)
         trainer = GRPOTrainer(reward_funcs=reward_fns, ...)
     """
-
-    def fn_format_exact(completions, **kwargs):
-        return reward_format_exact(completions, rewards_cfg=rewards_cfg, **kwargs)
-
-    def fn_format_approx(completions, **kwargs):
-        return reward_format_approximate(completions, rewards_cfg=rewards_cfg, **kwargs)
-
-    def fn_correctness(completions, answer, **kwargs):
-        return reward_correctness(completions, answer=answer, rewards_cfg=rewards_cfg, **kwargs)
-
-    def fn_number_extraction(completions, answer, **kwargs):
-        return reward_number_extraction(completions, answer=answer, rewards_cfg=rewards_cfg, **kwargs)
-
-    return [fn_format_exact, fn_format_approx, fn_correctness, fn_number_extraction]
+    return [
+        xmlcount_reward_func,
+        soft_format_reward_func,
+        strict_format_reward_func,
+        int_reward_func,
+        correctness_reward_func,
+    ]

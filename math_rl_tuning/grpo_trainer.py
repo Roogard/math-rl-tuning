@@ -14,7 +14,6 @@ import importlib.util
 from typing import Optional, Tuple
 
 from trl import GRPOTrainer, GRPOConfig
-from transformers import TrainerCallback
 from datasets import Dataset
 
 from math_rl_tuning.config import Config
@@ -25,19 +24,32 @@ from math_rl_tuning.model import (
     patch_vocab_size,
 )
 from math_rl_tuning.data import prepare_grpo_data
-from math_rl_tuning.rewards import build_reward_functions, reward_metrics
 from math_rl_tuning.utils import patch_colab_fileno, is_colab, is_bf16_supported
 
 HAS_UNSLOTH = importlib.util.find_spec("unsloth") is not None
 
 
-class RewardLoggingCallback(TrainerCallback):
-    """Inject per-reward-function means into the training log table."""
+class LoggingGRPOTrainer(GRPOTrainer):
+    """GRPOTrainer subclass that restores vanilla TRL reward metric logging.
 
-    def on_log(self, args, state, control, logs=None, **kwargs):
-        if logs is not None and reward_metrics:
-            for key, value in reward_metrics.items():
-                logs[f"reward/{key}"] = round(value, 4)
+    Unsloth monkey-patches GRPOTrainer.log() and drops the self._metrics
+    merge that vanilla TRL performs.  We restore it here so that reward,
+    reward_std, kl, completion_length, per-function rewards, etc. all
+    appear in the training table.
+    """
+
+    def log(self, logs, start_time=None):
+        mode = "eval" if self.control.should_evaluate else "train"
+        if hasattr(self, "_metrics") and self._metrics.get(mode):
+            metrics = {
+                key: sum(val) / len(val)
+                for key, val in self._metrics[mode].items()
+                if val
+            }
+            if mode == "eval":
+                metrics = {f"eval_{key}": val for key, val in metrics.items()}
+            logs = {**logs, **metrics}
+        super().log(logs, start_time)
 
 
 def build_grpo_config(cfg: Config):
@@ -112,13 +124,12 @@ def run_grpo_training(
     reward_fns = build_reward_functions(cfg.rewards)
     training_args = build_grpo_config(cfg)
 
-    trainer = GRPOTrainer(
+    trainer = LoggingGRPOTrainer(
         model=model,
         reward_funcs=reward_fns,
         args=training_args,
         train_dataset=grpo_dataset,
         processing_class=tokenizer,
-        callbacks=[RewardLoggingCallback()],
     )
 
     model.print_trainable_parameters()

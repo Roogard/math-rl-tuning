@@ -18,16 +18,6 @@ from typing import List
 
 from math_rl_tuning.config import RewardsConfig
 
-# Shared dict updated by each reward function so a TrainerCallback can
-# inject the values into the training table (reward/correctness, etc.).
-reward_metrics: dict[str, float] = {}
-
-
-def _track(name: str, scores: list[float]) -> list[float]:
-    """Store the batch-mean of *scores* under *name* and return scores unchanged."""
-    reward_metrics[name] = sum(scores) / len(scores) if scores else 0.0
-    return scores
-
 
 def _extract_xml_answer(text: str) -> str:
     """Extract content from <answer>...</answer> tags."""
@@ -53,14 +43,14 @@ def correctness_reward_func(prompts, completions, answer, **kwargs) -> list[floa
     """Exact match of extracted answer vs ground truth."""
     responses = [_get_content(c) for c in completions]
     extracted = [_extract_xml_answer(r) for r in responses]
-    return _track("correctness", [2.0 if r == a else 0.0 for r, a in zip(extracted, answer)])
+    return [2.0 if r == a else 0.0 for r, a in zip(extracted, answer)]
 
 
 def int_reward_func(completions, **kwargs) -> list[float]:
     """Check if extracted answer is a pure integer."""
     responses = [_get_content(c) for c in completions]
     extracted = [_extract_xml_answer(r) for r in responses]
-    return _track("int_check", [0.5 if r.isdigit() else 0.0 for r in extracted])
+    return [0.5 if r.isdigit() else 0.0 for r in extracted]
 
 
 def strict_format_reward_func(completions, **kwargs) -> list[float]:
@@ -68,7 +58,7 @@ def strict_format_reward_func(completions, **kwargs) -> list[float]:
     pattern = r"^<reasoning>\n.*?\n</reasoning>\n<answer>\n.*?\n</answer>\n$"
     responses = [_get_content(c) for c in completions]
     matches = [re.match(pattern, r, re.DOTALL) for r in responses]
-    return _track("strict_fmt", [0.5 if match else 0.0 for match in matches])
+    return [0.5 if match else 0.0 for match in matches]
 
 
 def soft_format_reward_func(completions, **kwargs) -> list[float]:
@@ -76,7 +66,7 @@ def soft_format_reward_func(completions, **kwargs) -> list[float]:
     pattern = r"<reasoning>.*?</reasoning>\s*<answer>.*?</answer>"
     responses = [_get_content(c) for c in completions]
     matches = [re.match(pattern, r, re.DOTALL) for r in responses]
-    return _track("soft_fmt", [0.5 if match else 0.0 for match in matches])
+    return [0.5 if match else 0.0 for match in matches]
 
 
 def _count_xml(text: str) -> float:
@@ -98,7 +88,7 @@ def _count_xml(text: str) -> float:
 def xmlcount_reward_func(completions, **kwargs) -> list[float]:
     """Graduated XML tag scoring."""
     contents = [_get_content(c) for c in completions]
-    return _track("xmlcount", [_count_xml(c) for c in contents])
+    return [_count_xml(c) for c in contents]
 
 
 # ---------------------------------------------------------------------------

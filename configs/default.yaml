@@ -21,7 +21,7 @@ paths:
 # --- Base Model ---
 model:
   name: "mistralai/Mistral-7B-Instruct-v0.2"
-  max_seq_length: 512   # MUST equal max_prompt_length + max_completion_length for Unsloth
+  max_seq_length: 1024
 
 # --- Quantization (QLoRA / BitsAndBytes) ---
 quantization:
@@ -131,16 +131,16 @@ grpo_training:
   weight_decay: 0.1
   lr_scheduler_type: "cosine"
   optim: "paged_adamw_8bit"
-  per_device_train_batch_size: 64
-  gradient_accumulation_steps: 1
-  num_generations: 8
-  max_prompt_length: 256
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 4
+  num_generations: 4
+  max_prompt_length: 512
   max_completion_length: 256
-  num_train_epochs: 1
+  num_train_epochs: 3
   report_to: "wandb"
   use_vllm: false
   beta: 0.01
-  grpo_sample_size: 5000
+  grpo_sample_size: 7400
   max_grad_norm: 0.1
   logging_steps: 1
   # Unsloth-specific

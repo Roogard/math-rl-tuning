@@ -21,7 +21,7 @@ paths:
 # --- Base Model ---
 model:
   name: "mistralai/Mistral-7B-Instruct-v0.2"
-  max_seq_length: 1024
+  max_seq_length: 512   # MUST equal max_prompt_length + max_completion_length for Unsloth
 
 # --- Quantization (QLoRA / BitsAndBytes) ---
 quantization:

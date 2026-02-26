@@ -21,7 +21,7 @@ paths:
 # --- Base Model ---
 model:
   name: "mistralai/Mistral-7B-Instruct-v0.2"
-  max_seq_length: 512
+  max_seq_length: 1024
 
 # --- Quantization (QLoRA / BitsAndBytes) ---
 quantization:

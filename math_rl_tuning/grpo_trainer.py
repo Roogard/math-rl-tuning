@@ -42,7 +42,6 @@ def build_grpo_config(cfg: Config):
     """Create a TRL GRPOConfig from the project configuration."""
     gc = cfg.grpo_training
     use_bf16 = is_bf16_supported()
-    max_seq_length = cfg.model.max_seq_length
 
     return GRPOConfig(
         output_dir=cfg.paths.grpo_output_dir,
@@ -51,7 +50,7 @@ def build_grpo_config(cfg: Config):
         gradient_accumulation_steps=gc.gradient_accumulation_steps,
         num_generations=gc.num_generations,
         max_prompt_length=gc.max_prompt_length,
-        max_completion_length= max_seq_length - gc.max_prompt_length,
+        max_completion_length=gc.max_completion_length,
         num_train_epochs=gc.num_train_epochs,
         report_to=gc.report_to,
         fp16=not use_bf16,

@@ -121,6 +121,9 @@ sft_training:
   dataset_num_proc: 24
   report_to: "wandb"
   wandb_project: "AI-MONuminaMath"
+  save_strategy: "steps"
+  save_steps: 100
+  save_total_limit: 3
 
 # --- GRPO / RL Training ---
 grpo_training:
@@ -143,6 +146,9 @@ grpo_training:
   grpo_sample_size: 5000
   max_grad_norm: 0.1
   logging_steps: 1
+  save_strategy: "steps"
+  save_steps: 50
+  save_total_limit: 3
   # Unsloth-specific
   use_unsloth: false
   gpu_memory_utilization: 0.5

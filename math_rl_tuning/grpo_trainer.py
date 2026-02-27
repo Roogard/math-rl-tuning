@@ -93,6 +93,9 @@ def build_grpo_config(cfg: Config):
         max_grad_norm=gc.max_grad_norm,
         lr_scheduler_type=gc.lr_scheduler_type,
         logging_steps=gc.logging_steps,
+        save_strategy=gc.save_strategy,
+        save_steps=gc.save_steps,
+        save_total_limit=gc.save_total_limit,
         optim=gc.optim,
         adam_beta1=gc.adam_beta1,
         adam_beta2=gc.adam_beta2,
@@ -104,6 +107,7 @@ def run_grpo_training(
     sft_adapter_path: Optional[str] = None,
     grpo_dataset: Optional[Dataset] = None,
     save_to_drive: bool = False,
+    checkpoint_path: Optional[str] = None,
 ) -> Tuple:
     """Run the full GRPO pipeline."""
     sft_path = sft_adapter_path or cfg.paths.sft_output_dir
@@ -160,7 +164,9 @@ def run_grpo_training(
 
     model.print_trainable_parameters()
     print("Starting GRPO training...")
-    trainer.train()
+    if checkpoint_path:
+        print(f"Resuming from checkpoint: {checkpoint_path}")
+    trainer.train(resume_from_checkpoint=checkpoint_path)
 
     # --- Phase 5: Save ---
     print("\n" + "=" * 60)

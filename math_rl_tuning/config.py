@@ -125,6 +125,9 @@ class SFTTrainingConfig:
     dataset_num_proc: int = 24
     report_to: str = "wandb"
     wandb_project: str = "AI-MONuminaMath"
+    save_strategy: str = "steps"
+    save_steps: int = 100
+    save_total_limit: int = 3
 
 
 @dataclass
@@ -148,6 +151,9 @@ class GRPOTrainingConfig:
     grpo_sample_size: int = 7400
     max_grad_norm: float = 0.1
     logging_steps: int = 1
+    save_strategy: str = "steps"
+    save_steps: int = 50
+    save_total_limit: int = 3
     use_unsloth: bool = False
     gpu_memory_utilization: float = 0.5
 

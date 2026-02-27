@@ -86,7 +86,9 @@ def build_sft_config(cfg: Config, output_dir: Optional[str] = None) -> SFTConfig
         push_to_hub=False,
         report_to=sc.report_to,
         run_name=run_name,
-        resume_from_checkpoint=True,
+        save_strategy=sc.save_strategy,
+        save_steps=sc.save_steps,
+        save_total_limit=sc.save_total_limit,
     )
 
 
@@ -99,6 +101,7 @@ def run_sft_training(
     train_ds: Optional[Dataset] = None,
     val_ds: Optional[Dataset] = None,
     save_to_drive: bool = False,
+    checkpoint_path: Optional[str] = None,
 ) -> Tuple:
     """
     Run the full SFT training pipeline:
@@ -154,7 +157,9 @@ def run_sft_training(
         processing_class=tokenizer,
     )
 
-    trainer.train()
+    if checkpoint_path:
+        print(f"Resuming from checkpoint: {checkpoint_path}")
+    trainer.train(resume_from_checkpoint=checkpoint_path)
 
     # 5. Save
     print("\n" + "=" * 60)

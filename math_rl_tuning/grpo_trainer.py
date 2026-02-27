@@ -24,6 +24,7 @@ except ImportError:
     HAS_UNSLOTH = False
 
 from trl import GRPOTrainer, GRPOConfig
+from transformers import TrainerCallback
 from datasets import Dataset
 
 from math_rl_tuning.config import Config
@@ -36,6 +37,36 @@ from math_rl_tuning.model import (
 from math_rl_tuning.data import prepare_grpo_data
 from math_rl_tuning.rewards import build_reward_functions
 from math_rl_tuning.utils import patch_colab_fileno, is_colab, is_bf16_supported
+
+
+class RewardTracker:
+    """Wraps a reward function to capture return values for logging."""
+
+    def __init__(self, func):
+        self._func = func
+        self.__name__ = func.__name__
+        self.__qualname__ = getattr(func, "__qualname__", func.__name__)
+        self.last_rewards = []
+
+    def __call__(self, *args, **kwargs):
+        rewards = self._func(*args, **kwargs)
+        self.last_rewards = rewards
+        return rewards
+
+
+class RewardLoggingCallback(TrainerCallback):
+    """Injects per-reward-function means into the training log dict."""
+
+    def __init__(self, tracked_fns):
+        self.tracked_fns = tracked_fns
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        if logs is None:
+            return
+        for fn in self.tracked_fns:
+            if fn.last_rewards:
+                mean_val = sum(fn.last_rewards) / len(fn.last_rewards)
+                logs[f"reward/{fn.__name__}"] = round(mean_val, 4)
 
 
 def build_grpo_config(cfg: Config):
@@ -114,12 +145,17 @@ def run_grpo_training(
     reward_fns = build_reward_functions(cfg.rewards)
     training_args = build_grpo_config(cfg)
 
+    # Wrap reward functions for per-function WandB logging
+    tracked_fns = [RewardTracker(fn) for fn in reward_fns]
+    reward_callback = RewardLoggingCallback(tracked_fns)
+
     trainer = GRPOTrainer(
         model=model,
-        reward_funcs=reward_fns,
+        reward_funcs=tracked_fns,
         args=training_args,
         train_dataset=grpo_dataset,
         processing_class=tokenizer,
+        callbacks=[reward_callback],
     )
 
     model.print_trainable_parameters()

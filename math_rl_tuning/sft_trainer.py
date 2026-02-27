@@ -141,6 +141,7 @@ def run_sft_training(
     print("\n" + "=" * 60)
     print("PHASE 3: Training")
     print("=" * 60)
+    print(f"Model: {cfg.model.name}")
     sft_config = build_sft_config(cfg)
 
     # Note: LoRA is already applied inside load_model_and_tokenizer(),

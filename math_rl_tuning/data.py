@@ -87,14 +87,15 @@ def balanced_split(
 
 def inject_system_prompt(example: dict, system_prompt: str) -> dict:
     """
-    Prepend *system_prompt* to the first user message in the example's
-    ``messages`` field.
+    Prepend a system message to the example's ``messages`` field.
+
+    Uses a proper ``system`` role so the tokenizer's chat template places
+    the instruction in the system slot (supported by Qwen2.5 and Llama-3).
+    Skips if a system message is already present.
     """
     msgs = example["messages"]
-    if msgs and msgs[0]["role"] == "user":
-        new_content = system_prompt + "\n\n" + msgs[0]["content"]
-        new_msgs = [{"role": "user", "content": new_content}] + msgs[1:]
-        return {"messages": new_msgs}
+    if not msgs or msgs[0]["role"] != "system":
+        return {"messages": [{"role": "system", "content": system_prompt}] + msgs}
     return {"messages": msgs}
 
 

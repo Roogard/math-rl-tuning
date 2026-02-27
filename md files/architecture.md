@@ -10,7 +10,7 @@ Math RL Tuning is a two-stage fine-tuning pipeline that takes a base instruction
 
 ```
 [HuggingFace Hub]
-  mistralai/Mistral-7B-Instruct-v0.2
+  Qwen/Qwen2.5-7B-Instruct
         │
         │  load_model_and_tokenizer(cfg, stage="sft")
         │  - 4-bit NF4 QLoRA (bitsandbytes)
@@ -22,9 +22,10 @@ Math RL Tuning is a two-stage fine-tuning pipeline that takes a base instruction
 │  Dataset: AI-MO/NuminaMath-CoT                      │
 │    → filter to gsm8k + math sources                 │
 │    → balanced_split: 6000 train / 1000 val          │
-│    → inject system prompt: "reason step by step,   │
-│      put final answer in \boxed{}"                  │
-│    → apply_mistral_chat_template()                  │
+│    → inject system prompt as system role message    │
+│      "reason step by step, put answer in \boxed{}"  │
+│    → TRL SFTTrainer applies chat template via       │
+│      dataset_text_field="messages"                  │
 │                                                     │
 │  Trainer: TRL SFTTrainer                            │
 │    → completion-only loss (ignores prompt tokens)   │
@@ -91,7 +92,7 @@ Math RL Tuning is a two-stage fine-tuning pipeline that takes a base instruction
 | Module | Responsibility |
 |---|---|
 | `config.py` | Load `configs/default.yaml`, deep-merge overrides, return typed `Config` dataclass |
-| `data.py` | Dataset loading, filtering, balanced sampling, Mistral chat template formatting |
+| `data.py` | Dataset loading, filtering, balanced sampling, system prompt injection, GRPO formatting |
 | `model.py` | QLoRA loading, LoRA attach/merge, Unsloth loading, vocab size patching |
 | `sft_trainer.py` | End-to-end SFT: data → model → train → save |
 | `grpo_trainer.py` | End-to-end GRPO: merge → Unsloth load → data → train → save |
@@ -139,8 +140,8 @@ Key config sections and what they control:
 ## Key Technical Constraints
 
 - **Unsloth import order**: `unsloth` must be imported before `trl` everywhere — it patches TRL internals for metric logging.
-- **No `UnslothGRPOTrainer`**: Use TRL's `GRPOTrainer` only. The Unsloth subclass has a known tensor-shape bug.
 - **`max_seq_length` in GRPO**: Pass to `FastLanguageModel.from_pretrained`, NOT to `GRPOConfig`. The GRPOConfig only takes `max_completion_length`.
 - **Pad token**: Always `eos_token` — adding a `[PAD]` token resizes embeddings and can cause CUDA asserts.
 - **Post-merge patch**: `patch_vocab_size()` must be called after `merge_adapter()` to fix the `config.json` vocab mismatch.
-- **Reward tracking**: All 5 reward function values must appear in the WandB training table so training quality can be assessed.
+- **Reward tracking**: `RewardTracker` + `RewardLoggingCallback` in `grpo_trainer.py` ensure all 5 reward function means appear in WandB at every training step.
+- **Dead code**: `apply_mistral_chat_template()` in `data.py` is no longer used. TRL's `SFTTrainer` applies the chat template automatically via `dataset_text_field="messages"` and the tokenizer's built-in template.

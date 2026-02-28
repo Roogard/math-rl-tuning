@@ -12,20 +12,23 @@ import os
 import shutil
 from typing import Optional, Tuple
 
-# Unsloth MUST be imported BEFORE trl so it can patch transformers/peft
-# with optimizations and enable reward metric logging in the training table.
-# NOTE: We do NOT call PatchFastRL("GRPO") — Unsloth's compiled
-# UnslothGRPOTrainer has a known tensor-shape bug with Mistral.
-# We only import FastLanguageModel (lightweight patch, no hangs).
+# Import TRL's GRPOTrainer BEFORE unsloth to save the original class.
+# Unsloth's import replaces trl.GRPOTrainer with UnslothGRPOTrainer which
+# has a known tensor-shape bug in compute_loss (completion_mask size mismatch).
+from trl import GRPOTrainer as _OriginalGRPOTrainer, GRPOConfig
+from transformers import TrainerCallback
+from datasets import Dataset
+
+# Now import unsloth for FastLanguageModel (model loading optimizations).
+# This will monkey-patch trl.GRPOTrainer, but we already saved the original.
 try:
     from unsloth import FastLanguageModel
     HAS_UNSLOTH = True
 except ImportError:
     HAS_UNSLOTH = False
 
-from trl import GRPOTrainer, GRPOConfig
-from transformers import TrainerCallback
-from datasets import Dataset
+# Use the original TRL GRPOTrainer to avoid Unsloth's buggy compiled version
+GRPOTrainer = _OriginalGRPOTrainer
 
 from math_rl_tuning.config import Config
 from math_rl_tuning.model import (

@@ -10,6 +10,7 @@ Simplified pipeline matching the official Unsloth Mistral GRPO notebook:
 
 import os
 import shutil
+from collections import defaultdict
 from typing import Optional, Tuple
 
 # Import TRL's GRPOTrainer BEFORE unsloth to save the original class.
@@ -58,25 +59,47 @@ class RewardTracker:
 
 
 class RewardLoggingCallback(TrainerCallback):
-    """Injects per-reward-function means into the training log dict."""
+    """Logs per-reward-function means to WandB and stdout, and tracks history for plotting."""
 
     def __init__(self, tracked_fns):
         self.tracked_fns = tracked_fns
+        self.history = defaultdict(list)
+        self.steps = []
 
     def on_log(self, args, state, control, logs=None, **kwargs):
         if logs is None:
             return
+        step = state.global_step
+        parts = []
         for fn in self.tracked_fns:
             if fn.last_rewards:
                 mean_val = sum(fn.last_rewards) / len(fn.last_rewards)
                 logs[f"reward/{fn.__name__}"] = round(mean_val, 4)
+                self.history[fn.__name__].append(mean_val)
+                parts.append(f"{fn.__name__}: {mean_val:.4f}")
+        if parts:
+            self.steps.append(step)
+            print(f"[step {step}] " + " | ".join(parts))
+
+    def plot(self):
+        """Display a matplotlib chart of all reward curves. Call after training."""
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(figsize=(10, 5))
+        for name, values in self.history.items():
+            ax.plot(self.steps[: len(values)], values, label=name, marker=".", linewidth=1.5)
+        ax.set_xlabel("Step")
+        ax.set_ylabel("Mean Reward")
+        ax.set_title("Reward Functions Over Training")
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.show()
 
 
 def build_grpo_config(cfg: Config):
     """Create a TRL GRPOConfig from the project configuration."""
     gc = cfg.grpo_training
     use_bf16 = is_bf16_supported()
-    max_seq_length = cfg.model.max_seq_length
 
     return GRPOConfig(
         output_dir=cfg.paths.grpo_output_dir,
@@ -85,7 +108,7 @@ def build_grpo_config(cfg: Config):
         gradient_accumulation_steps=gc.gradient_accumulation_steps,
         num_generations=gc.num_generations,
         max_prompt_length=gc.max_prompt_length,
-        max_completion_length=max_seq_length - gc.max_prompt_length,
+        max_completion_length=gc.max_completion_length,
         num_train_epochs=gc.num_train_epochs,
         report_to=gc.report_to,
         fp16=not use_bf16,
@@ -184,7 +207,7 @@ def run_grpo_training(
     if save_to_drive:
         _copy_to_drive(save_dir, cfg)
 
-    return trainer, model, tokenizer
+    return trainer, model, tokenizer, reward_callback
 
 
 def _copy_to_drive(source_dir: str, cfg: Config):

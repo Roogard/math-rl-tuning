@@ -181,6 +181,41 @@ def evaluate_adapter(
 
 
 # ---------------------------------------------------------------------------
+# Evaluate the raw base model (no adapter)
+# ---------------------------------------------------------------------------
+
+def evaluate_base_model(
+    cfg: Config,
+    test_dataset,
+    num_samples: int = 50,
+    model_name: str = "Base",
+) -> Tuple[pd.DataFrame, float]:
+    """
+    Load the raw base model (no LoRA adapter) and evaluate it.
+
+    Useful as a baseline to measure how much SFT and GRPO improved things.
+    """
+    from math_rl_tuning.model import load_model_and_tokenizer
+
+    print(f"\nLoading base model: {cfg.model.name}")
+    model, tokenizer = load_model_and_tokenizer(cfg, stage="sft", inference=True)
+
+    results_df, accuracy = evaluate_model(
+        model=model,
+        tokenizer=tokenizer,
+        test_dataset=test_dataset,
+        num_samples=num_samples,
+        max_new_tokens=cfg.evaluation.max_new_tokens,
+        model_name=model_name,
+    )
+
+    del model, tokenizer
+    clean_memory(verbose=True)
+
+    return results_df, accuracy
+
+
+# ---------------------------------------------------------------------------
 # Head-to-head comparison
 # ---------------------------------------------------------------------------
 
@@ -190,15 +225,29 @@ def compare_models(
     test_dataset,
     cfg: Config,
     num_samples: int = 50,
+    include_base: bool = True,
 ) -> Dict:
     """
-    Evaluate SFT and RL models side-by-side and print a comparison.
+    Evaluate Base, SFT, and RL models side-by-side and print a comparison.
 
     Returns a dict with results DataFrames and accuracy scores.
+    Set include_base=False to skip the base model evaluation.
     """
     print("=" * 50)
     print("  HEAD-TO-HEAD MODEL COMPARISON")
     print("=" * 50)
+
+    results = {}
+
+    # Evaluate Base (optional)
+    if include_base:
+        base_df, base_acc = evaluate_base_model(
+            cfg=cfg,
+            test_dataset=test_dataset,
+            num_samples=num_samples,
+        )
+        results["base_results"] = base_df
+        results["base_accuracy"] = base_acc
 
     # Evaluate SFT
     sft_df, sft_acc = evaluate_adapter(
@@ -208,6 +257,8 @@ def compare_models(
         num_samples=num_samples,
         model_name="SFT",
     )
+    results["sft_results"] = sft_df
+    results["sft_accuracy"] = sft_acc
 
     # Evaluate RL
     rl_df, rl_acc = evaluate_adapter(
@@ -217,44 +268,43 @@ def compare_models(
         num_samples=num_samples,
         model_name="RL (GRPO)",
     )
+    results["rl_results"] = rl_df
+    results["rl_accuracy"] = rl_acc
 
     # Summary
     print("\n" + "=" * 50)
     print("  RESULTS")
     print("=" * 50)
-    print(f"SFT Accuracy:       {sft_acc:.2%}")
-    print(f"RL (GRPO) Accuracy: {rl_acc:.2%}")
-    print(f"Improvement:        {rl_acc - sft_acc:+.2%}")
+    if include_base:
+        print(f"Base Accuracy:      {base_acc:.2%}")
+        print(f"SFT Accuracy:       {sft_acc:.2%}  ({sft_acc - base_acc:+.2%} vs Base)")
+    else:
+        print(f"SFT Accuracy:       {sft_acc:.2%}")
+    print(f"RL (GRPO) Accuracy: {rl_acc:.2%}  ({rl_acc - sft_acc:+.2%} vs SFT)")
 
-    # Qualitative analysis
+    # Qualitative analysis: Base → SFT
+    if include_base and base_df is not None and sft_df is not None:
+        comp_base_sft = base_df[["problem_snippet", "ground_truth"]].copy()
+        comp_base_sft["Base_correct"] = base_df["is_correct"].values
+        comp_base_sft["SFT_correct"] = sft_df["is_correct"].values
+        results["base_vs_sft"] = comp_base_sft
+
+        sft_gains = comp_base_sft[(~comp_base_sft["Base_correct"]) & comp_base_sft["SFT_correct"]]
+        sft_regressions = comp_base_sft[comp_base_sft["Base_correct"] & (~comp_base_sft["SFT_correct"])]
+        print(f"\nSFT fixed {len(sft_gains)} Base errors, regressed on {len(sft_regressions)}.")
+
+    # Qualitative analysis: SFT → RL
     if sft_df is not None and rl_df is not None:
-        comparison = sft_df[["problem_snippet", "ground_truth"]].copy()
-        comparison["SFT_answer"] = sft_df["predicted"]
-        comparison["SFT_correct"] = sft_df["is_correct"]
-        comparison["RL_answer"] = rl_df["predicted"]
-        comparison["RL_correct"] = rl_df["is_correct"]
+        comp_sft_rl = sft_df[["problem_snippet", "ground_truth"]].copy()
+        comp_sft_rl["SFT_correct"] = sft_df["is_correct"].values
+        comp_sft_rl["RL_correct"] = rl_df["is_correct"].values
+        results["sft_vs_rl"] = comp_sft_rl
 
-        # Cases where RL fixed an SFT mistake
-        improved = comparison[
-            (~comparison["SFT_correct"]) & comparison["RL_correct"]
-        ]
-        if not improved.empty:
-            print(f"\nRL fixed {len(improved)} SFT errors:")
-            print(improved.to_string(index=False))
+        rl_gains = comp_sft_rl[(~comp_sft_rl["SFT_correct"]) & comp_sft_rl["RL_correct"]]
+        rl_regressions = comp_sft_rl[comp_sft_rl["SFT_correct"] & (~comp_sft_rl["RL_correct"])]
+        print(f"RL fixed {len(rl_gains)} SFT errors, regressed on {len(rl_regressions)}.")
 
-        # Cases where RL regressed
-        regressed = comparison[
-            comparison["SFT_correct"] & (~comparison["RL_correct"])
-        ]
-        if not regressed.empty:
-            print(f"\nRL regressed on {len(regressed)} examples.")
-
-    return {
-        "sft_results": sft_df,
-        "sft_accuracy": sft_acc,
-        "rl_results": rl_df,
-        "rl_accuracy": rl_acc,
-    }
+    return results
 
 
 # ---------------------------------------------------------------------------
@@ -270,8 +320,9 @@ def save_results(
 
     # Save summary
     summary = {
-        "sft_accuracy": results.get("sft_accuracy"),
-        "rl_accuracy": results.get("rl_accuracy"),
+        k: results[k]
+        for k in ("base_accuracy", "sft_accuracy", "rl_accuracy")
+        if k in results
     }
     summary_path = os.path.join(output_dir, "summary.json")
     with open(summary_path, "w") as f:
@@ -279,7 +330,7 @@ def save_results(
     print(f"Summary saved to: {summary_path}")
 
     # Save detailed results
-    for key in ["sft_results", "rl_results"]:
+    for key in ["base_results", "sft_results", "rl_results"]:
         df = results.get(key)
         if df is not None:
             csv_path = os.path.join(output_dir, f"{key}.csv")

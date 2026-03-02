@@ -1,7 +1,7 @@
 """
 GRPO (Group Relative Policy Optimization) trainer.
 
-Simplified pipeline matching the official Unsloth Mistral GRPO notebook:
+Simplified pipeline matching the official Unsloth GRPO notebook:
   1. Merge the SFT adapter into the base model
   2. Load with Unsloth FastLanguageModel (or standard HF fallback)
   3. Train with TRL GRPOTrainer

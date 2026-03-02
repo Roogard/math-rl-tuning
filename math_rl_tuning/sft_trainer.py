@@ -20,13 +20,13 @@ from math_rl_tuning.utils import clean_memory
 
 
 # ---------------------------------------------------------------------------
-# Tokenizer setup (Mistral-specific)
+# Tokenizer setup
 # ---------------------------------------------------------------------------
 
 def setup_tokenizer(tokenizer: AutoTokenizer, max_length: int = 2048):
     """
     Configure the tokenizer with correct special tokens, padding, and
-    max length for Mistral-Instruct fine-tuning.
+    max length for fine-tuning.
     """
     tokenizer.model_max_length = max_length
     tokenizer.padding_side = "right"

@@ -6,7 +6,6 @@ Handles:
   - Source-based filtering (keep/drop specific math sources)
   - Balanced per-source sampling for train/val splits
   - System prompt injection into message lists
-  - Mistral-style chat template formatting
   - GRPO prompt formatting
 """
 
@@ -97,37 +96,6 @@ def inject_system_prompt(example: dict, system_prompt: str) -> dict:
     if not msgs or msgs[0]["role"] != "system":
         return {"messages": [{"role": "system", "content": system_prompt}] + msgs}
     return {"messages": msgs}
-
-
-# ---------------------------------------------------------------------------
-# Mistral chat template
-# ---------------------------------------------------------------------------
-
-def apply_mistral_chat_template(example: dict, **kwargs) -> dict:
-    """
-    Convert a list of messages into Mistral-Instruct chat format::
-
-        <s>[INST] user message [/INST] assistant message</s>
-    """
-    messages = example["messages"]
-    text_parts = []
-    current = ""
-
-    for m in messages:
-        role = m["role"]
-        content = m["content"]
-
-        if role == "user":
-            if current:
-                text_parts.append(current)
-            current = f"<s>[INST] {content} [/INST]"
-        elif role == "assistant":
-            current = current + f" {content}</s>"
-
-    if current:
-        text_parts.append(current)
-
-    return {"text": "\n".join(text_parts)}
 
 
 # ---------------------------------------------------------------------------

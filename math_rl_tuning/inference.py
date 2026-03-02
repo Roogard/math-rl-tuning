@@ -28,12 +28,13 @@ def generate_stream(
     top_p: float = 0.9,
     do_sample: bool = True,
     print_output: bool = True,
+    system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}.",
 ) -> str:
     """
     Generate a response with token-by-token streaming.
 
-    Uses Mistral-Instruct prompt format:
-        <s>[INST] question [/INST]
+    Uses the tokenizer's chat template so the prompt format matches
+    whatever model is loaded (Qwen, Mistral, Llama, etc.).
 
     Args:
         question: The math question to ask.
@@ -44,6 +45,7 @@ def generate_stream(
         top_p: Top-p (nucleus) sampling threshold.
         do_sample: Whether to sample (True) or use greedy decoding (False).
         print_output: If True, print tokens as they are generated.
+        system_prompt: System instruction prepended to the conversation.
 
     Returns:
         The full generated text (response only, without prompt).
@@ -51,10 +53,19 @@ def generate_stream(
     from transformers import TextIteratorStreamer
 
     model.eval()
-    prompt = f"<s>[INST] {question} [/INST]"
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": question},
+    ]
+    prompt = tokenizer.apply_chat_template(
+        messages, tokenize=False, add_generation_prompt=True
+    )
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+    prompt_len = inputs["input_ids"].shape[1]
 
-    streamer = TextIteratorStreamer(tokenizer, skip_special_tokens=True)
+    streamer = TextIteratorStreamer(
+        tokenizer, skip_special_tokens=True, skip_prompt=True
+    )
 
     generation_kwargs = dict(
         **inputs,
@@ -85,8 +96,7 @@ def generate_stream(
     if print_output:
         print()  # newline after streaming
 
-    # Strip prompt from output if present
-    return _strip_prompt(output_text)
+    return output_text.strip()
 
 
 # ---------------------------------------------------------------------------
@@ -101,14 +111,24 @@ def generate(
     temperature: float = 0.7,
     top_p: float = 0.9,
     do_sample: bool = True,
+    system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}.",
 ) -> str:
     """
     Generate a response without streaming.
 
+    Uses the tokenizer's chat template so the prompt format matches
+    whatever model is loaded (Qwen, Mistral, Llama, etc.).
+
     Returns the model's response (prompt stripped).
     """
     model.eval()
-    prompt = f"<s>[INST] {question} [/INST]"
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": question},
+    ]
+    prompt = tokenizer.apply_chat_template(
+        messages, tokenize=False, add_generation_prompt=True
+    )
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
     with torch.no_grad():
@@ -121,8 +141,9 @@ def generate(
             pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
         )
 
-    full_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
-    return _strip_prompt(full_text)
+    # Decode only the newly generated tokens (skip the prompt)
+    new_tokens = output_ids[0][inputs["input_ids"].shape[1]:]
+    return tokenizer.decode(new_tokens, skip_special_tokens=True)
 
 
 # ---------------------------------------------------------------------------
@@ -176,13 +197,6 @@ def generate_from_config(
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-def _strip_prompt(text: str) -> str:
-    """Remove the Mistral prompt prefix from generated text."""
-    if "[/INST]" in text:
-        return text.split("[/INST]")[-1].strip()
-    return text.strip()
-
 
 def extract_final_answer(response: str) -> Optional[str]:
     """

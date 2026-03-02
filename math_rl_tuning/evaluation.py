@@ -35,14 +35,21 @@ def generate_greedy(
     model,
     tokenizer,
     max_new_tokens: int = 512,
+    system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}.",
 ) -> str:
     """
     Generate a response using greedy decoding (deterministic).
 
-    The question is wrapped in Mistral-Instruct format:
-        <s>[INST] question [/INST]
+    Uses the tokenizer's chat template so the prompt format matches
+    whatever model is loaded (Qwen, Mistral, Llama, etc.).
     """
-    prompt = f"<s>[INST] {question} [/INST]"
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": question},
+    ]
+    prompt = tokenizer.apply_chat_template(
+        messages, tokenize=False, add_generation_prompt=True
+    )
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
     with torch.no_grad():
@@ -50,13 +57,13 @@ def generate_greedy(
             **inputs,
             max_new_tokens=max_new_tokens,
             do_sample=False,
-            temperature=0.0,
-            top_p=1.0,
             pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
             eos_token_id=tokenizer.eos_token_id,
         )
 
-    return tokenizer.decode(output_ids[0], skip_special_tokens=True)
+    # Decode only the newly generated tokens (skip the prompt)
+    new_tokens = output_ids[0][inputs["input_ids"].shape[1]:]
+    return tokenizer.decode(new_tokens, skip_special_tokens=True)
 
 
 # ---------------------------------------------------------------------------

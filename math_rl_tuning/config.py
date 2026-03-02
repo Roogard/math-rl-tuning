@@ -53,7 +53,7 @@ class PathsConfig:
 
 @dataclass
 class ModelConfig:
-    name: str = "mistralai/Mistral-7B-Instruct-v0.2"
+    name: str = "Qwen/Qwen2.5-7B-Instruct"
     max_seq_length: int = 2048
 
 

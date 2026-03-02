@@ -1,7 +1,7 @@
 """
 Reward functions for GRPO reinforcement learning.
 
-Matches the official Unsloth Mistral GRPO notebook pattern.
+Matches the official Unsloth GRPO notebook pattern.
 TRL passes completions as list of list of message dicts:
     completions = [[{"role": "assistant", "content": "..."}], ...]
 

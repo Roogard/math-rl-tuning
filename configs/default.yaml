@@ -41,7 +41,7 @@ lora:
     task_type: "CAUSAL_LM"
     target_modules: "all-linear"
   # GRPO/RL LoRA config (fresh adapter on top of merged SFT)
-  # Matches official Unsloth Mistral GRPO notebook: r=32, alpha=r
+  # Matches official Unsloth GRPO notebook: r=32, alpha=r
   grpo:
     r: 32
     alpha: 32

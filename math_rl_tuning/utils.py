@@ -127,24 +127,52 @@ def extract_boxed(text: str) -> Optional[str]:
     r"""
     Extract the LAST ``\boxed{...}`` content from *text*.
 
+    Handles nested braces correctly, e.g. ``\boxed{\dfrac{17}{32}}``
+    extracts ``\dfrac{17}{32}`` instead of just ``\dfrac{17``.
+
     Returns None if no boxed answer is found.
     """
     if text is None:
         return None
-    matches = re.findall(r"\\boxed\{([^}]*)\}", text)
-    if not matches:
-        return None
-    return matches[-1].strip()
+    result = None
+    start_tag = "\\boxed{"
+    idx = text.find(start_tag)
+    while idx != -1:
+        depth = 1
+        i = idx + len(start_tag)
+        while i < len(text) and depth > 0:
+            if text[i] == '{':
+                depth += 1
+            elif text[i] == '}':
+                depth -= 1
+            i += 1
+        if depth == 0:
+            result = text[idx + len(start_tag):i - 1].strip()
+        idx = text.find(start_tag, idx + 1)
+    return result
 
 
 def extract_xml_answer(text: str) -> str:
     r"""
-    Quick extraction: split on ``\boxed{`` and grab everything before
-    the first closing ``}``.
+    Extract content from the last ``\boxed{...}`` in *text*.
+
+    Handles nested braces correctly. Falls back to the raw text
+    if no ``\boxed{`` is found.
     """
-    answer = text.split("\\boxed{")[-1]
-    answer = answer.split("}")[0]
-    return answer
+    if "\\boxed{" not in text:
+        return text.strip()
+    idx = text.rfind("\\boxed{")
+    depth = 1
+    i = idx + len("\\boxed{")
+    while i < len(text) and depth > 0:
+        if text[i] == '{':
+            depth += 1
+        elif text[i] == '}':
+            depth -= 1
+        i += 1
+    if depth == 0:
+        return text[idx + len("\\boxed{"):i - 1].strip()
+    return text.strip()
 
 
 def extract_xml_tag_answer(text: str) -> Optional[str]:

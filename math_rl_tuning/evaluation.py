@@ -16,14 +16,52 @@ import pandas as pd
 from typing import Dict, List, Optional, Tuple
 from tqdm import tqdm
 
+from math_verify import LatexExtractionConfig, parse, verify
+from latex2sympy2_extended import NormalizationConfig
+
 from math_rl_tuning.config import Config
-from math_rl_tuning.utils import (
-    extract_boxed,
-    normalize_answer,
-    extract_answer_letter,
-    latex_equal,
-    clean_memory,
-)
+from math_rl_tuning.utils import extract_boxed, clean_memory
+
+
+# ---------------------------------------------------------------------------
+# Math-verify based answer comparison
+# ---------------------------------------------------------------------------
+
+_LATEX_EXTRACTION_CONFIG = [
+    LatexExtractionConfig(
+        normalization_config=NormalizationConfig(
+            nits=False,
+            malformed_operators=False,
+            basic_latex=True,
+            equations=True,
+            boxed="all",
+            units=True,
+        ),
+        boxed_match_priority=0,
+        try_extract_without_anchor=False,
+    )
+]
+
+
+def math_verify_equal(gold_text: str, pred_text: str) -> bool:
+    """
+    Compare two answers using math-verify's semantic comparison.
+
+    Handles LaTeX normalization, SymPy conversion, and format-agnostic
+    matching (e.g. ``\\frac{3}{1}`` == ``3``, ``380\\,\\text{m}`` == ``380``).
+    """
+    try:
+        gold_parsed = parse(gold_text, extraction_mode="first_match")
+        if len(gold_parsed) == 0:
+            return False
+        pred_parsed = parse(
+            pred_text,
+            extraction_config=_LATEX_EXTRACTION_CONFIG,
+            extraction_mode="first_match",
+        )
+        return bool(verify(gold_parsed, pred_parsed))
+    except Exception:
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -112,23 +150,17 @@ def evaluate_model(
 
     for _, row in tqdm(subset.iterrows(), total=len(subset)):
         question = row["problem"]
-        gold_raw = extract_boxed(row["solution"])
-        gold = normalize_answer(gold_raw)
+        gold_solution = row["solution"]
 
         # Generate
         output = generate_greedy(question, model, tokenizer, max_new_tokens)
 
-        # Extract prediction
-        pred_raw = extract_boxed(output)
-        pred = normalize_answer(pred_raw)
+        # Extract display values for the results CSV (human readability)
+        gold_display = extract_boxed(gold_solution) or gold_solution[:80]
+        pred_display = extract_boxed(output)
 
-        # Compare: exact match or symbolic equality
-        is_correct = False
-        if pred is not None and gold is not None:
-            if pred == gold:
-                is_correct = True
-            elif latex_equal(pred, gold):
-                is_correct = True
+        # Compare using math-verify (semantic equality)
+        is_correct = math_verify_equal(gold_solution, output)
 
         if is_correct:
             correct += 1
@@ -136,8 +168,8 @@ def evaluate_model(
         results.append({
             "model": model_name,
             "problem_snippet": str(question)[:80],
-            "ground_truth": gold,
-            "predicted": pred,
+            "ground_truth": gold_display,
+            "predicted": pred_display,
             "is_correct": is_correct,
             "full_output": output[:500],
         })

@@ -40,10 +40,20 @@ def _get_content(completion) -> str:
 # ---------------------------------------------------------------------------
 
 def correctness_reward_func(prompts, completions, answer, **kwargs) -> list[float]:
-    """Exact match of extracted answer vs ground truth."""
+    """Semantic match of extracted answer vs ground truth using math-verify."""
+    from math_verify import parse, verify
+
     responses = [_get_content(c) for c in completions]
     extracted = [_extract_xml_answer(r) for r in responses]
-    return [2.0 if r == a else 0.0 for r, a in zip(extracted, answer)]
+    rewards = []
+    for r, a in zip(extracted, answer):
+        try:
+            gold = parse(a, extraction_mode="first_match")
+            pred = parse(r, extraction_mode="first_match")
+            rewards.append(2.0 if verify(gold, pred) else 0.0)
+        except Exception:
+            rewards.append(0.0)
+    return rewards
 
 
 def int_reward_func(completions, **kwargs) -> list[float]:

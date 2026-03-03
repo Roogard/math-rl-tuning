@@ -187,33 +187,3 @@ def extract_xml_tag_answer(text: str) -> Optional[str]:
     return None
 
 
-def normalize_answer(ans: Optional[str]) -> Optional[str]:
-    """Strip whitespace and remove common LaTeX wrappers for comparison."""
-    if ans is None:
-        return None
-    ans = ans.replace(" ", "")
-    ans = re.sub(r"\\textbf\{\((.)\)\}", r"\1", ans)
-    return ans
-
-
-def extract_answer_letter(text: str) -> str:
-    r"""
-    Extract a multiple-choice letter (a-e) from text containing
-    'Answer: X' or 'Final Answer: X'.  Returns the LAST match.
-    """
-    matches = re.findall(r"(?:final\s*|)answer\s*[:\-]?\s*([a-e])", text.lower())
-    if matches:
-        return matches[-1]
-    return "None"
-
-
-def latex_equal(a: str, b: str) -> bool:
-    """
-    Try to determine symbolic equality of two LaTeX expressions
-    using latex2sympy2.  Returns False on any failure.
-    """
-    try:
-        from latex2sympy2 import latex2sympy
-        return latex2sympy(a).equals(latex2sympy(b))
-    except Exception:
-        return False

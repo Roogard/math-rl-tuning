@@ -12,7 +12,7 @@ import torch
 from typing import Optional
 
 from math_rl_tuning.config import Config
-from math_rl_tuning.utils import extract_boxed, extract_xml_tag_answer
+from math_rl_tuning.utils import extract_boxed
 
 
 # ---------------------------------------------------------------------------
@@ -199,16 +199,11 @@ def generate_from_config(
 # ---------------------------------------------------------------------------
 
 def extract_final_answer(response: str) -> Optional[str]:
-    """
+    r"""
     Extract the final answer from a model response.
 
-    Tries <answer> XML tags first (GRPO format), then \\boxed{},
-    then falls back to the last line.
+    Tries ``\boxed{}`` first, then falls back to the last line.
     """
-    xml_ans = extract_xml_tag_answer(response)
-    if xml_ans:
-        return xml_ans
-
     boxed = extract_boxed(response)
     if boxed:
         return boxed

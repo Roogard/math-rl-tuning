@@ -15,6 +15,7 @@ from typing import Dict, List, Optional, Tuple
 from datasets import Dataset, load_dataset
 
 from math_rl_tuning.config import Config, DatasetConfig
+from math_rl_tuning.utils import extract_boxed
 
 
 # ---------------------------------------------------------------------------
@@ -81,6 +82,44 @@ def balanced_split(
 
 
 # ---------------------------------------------------------------------------
+# Answer format normalization
+# ---------------------------------------------------------------------------
+
+def _ensure_boxed_in_messages(example: dict) -> dict:
+    r"""Ensure the assistant's final answer is wrapped in ``\boxed{}``.
+
+    Handles three cases in order:
+    1. Already has ``\boxed{}`` → no-op.
+    2. Has GSM8K ``####`` marker → replaces with ``\boxed{}``.
+    3. Neither → falls back to extracting ``\boxed{}`` from the ``solution``
+       field (available as a separate column in NuminaMath-CoT).
+    """
+    msgs = example["messages"]
+    for i in range(len(msgs) - 1, -1, -1):
+        if msgs[i]["role"] == "assistant":
+            content = msgs[i]["content"]
+            if "\\boxed{" in content:
+                break  # already correct
+            if "####" in content:
+                parts = content.rsplit("####", 1)
+                answer = parts[1].strip()
+                msgs[i]["content"] = (
+                    parts[0].rstrip()
+                    + f"\n\nThe answer is $\\boxed{{{answer}}}$."
+                )
+                break
+            # Fallback: pull the answer from the raw solution field
+            fallback = extract_boxed(example.get("solution", ""))
+            if fallback:
+                msgs[i]["content"] = (
+                    content.rstrip()
+                    + f"\n\nThe answer is $\\boxed{{{fallback}}}$."
+                )
+            break
+    return {"messages": msgs}
+
+
+# ---------------------------------------------------------------------------
 # System prompt injection
 # ---------------------------------------------------------------------------
 
@@ -144,14 +183,15 @@ def format_grpo_prompt_numina(
       - ``prompt``: list of message dicts (TRL applies chat template)
       - ``answer``: the extracted ground-truth answer from \\boxed{}
     """
-    from math_rl_tuning.utils import extract_xml_answer
+    solution = example["solution"]
+    answer = extract_boxed(solution) or solution.strip()
 
     return {
         "prompt": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": example["problem"]},
         ],
-        "answer": extract_xml_answer(example["solution"]),
+        "answer": answer,
     }
 
 
@@ -177,6 +217,10 @@ def prepare_sft_data(cfg: Config):
     ds = ds.map(
         lambda ex: inject_system_prompt(ex, dc.system_prompt)
     )
+
+    # Ensure all assistant answers use \boxed{} (converts GSM8K's #### format)
+    print("Normalizing answer format to \\boxed{}...")
+    ds = ds.map(_ensure_boxed_in_messages)
 
     df = ds["train"].to_pandas()
 

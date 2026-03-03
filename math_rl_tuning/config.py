@@ -96,11 +96,7 @@ class DatasetConfig:
     val_per_source: int = 1000
     random_state: int = 42
     system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}."
-    grpo_system_prompt: str = (
-        "\nRespond in the following format:\n"
-        "<reasoning>\n...\n</reasoning>\n"
-        "<answer>\n...\n</answer>\n"
-    )
+    grpo_system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}."
 
 
 @dataclass
@@ -172,7 +168,7 @@ class RewardsConfig:
 @dataclass
 class EvaluationConfig:
     num_samples: int = 50
-    max_new_tokens: int = 512
+    max_new_tokens: int = 1024
     greedy: bool = True
 
 

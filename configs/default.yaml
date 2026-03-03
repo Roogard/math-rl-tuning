@@ -88,14 +88,7 @@ dataset:
   val_per_source: 1000
   random_state: 42
   system_prompt: "Please reason step by step, and put your final answer within \\boxed{}."
-  grpo_system_prompt: |
-    Respond in the following format:
-    <reasoning>
-    ...
-    </reasoning>
-    <answer>
-    ...
-    </answer>
+  grpo_system_prompt: "Please reason step by step, and put your final answer within \\boxed{}."
 
 # --- SFT Training ---
 sft_training:
@@ -138,7 +131,7 @@ grpo_training:
   gradient_accumulation_steps: 1
   num_generations: 4
   max_prompt_length: 256
-  max_completion_length: 512
+  max_completion_length: 1024
   num_train_epochs: 1
   report_to: "wandb"
   use_vllm: false
@@ -155,24 +148,24 @@ grpo_training:
 
 # --- Reward Function ---
 rewards:
-  # Points for correct answer (exact match)
+  # Points for correct answer (semantic match via math-verify)
   correct_bonus: 3.0
   # Penalty for wrong answer (negative signal)
   incorrect_penalty: -0.5
   # Points for approximate answer (within 10%)
   approximate_bonus: 1.5
-  # Points for exact XML format compliance
+  # Points for using \boxed{} format
   format_exact_bonus: 3.0
-  # Per-tag bonus/penalty for approximate format compliance
+  # Per-tag bonus/penalty for format compliance
   format_tag_bonus: 0.5
   format_tag_penalty: -0.5
-  # Points for extractable number in <answer> tag
+  # Points for extractable number in \boxed{}
   number_extraction_bonus: 1.5
 
 # --- Evaluation ---
 evaluation:
   num_samples: 50
-  max_new_tokens: 512
+  max_new_tokens: 1024
   greedy: true
 
 # --- Inference ---

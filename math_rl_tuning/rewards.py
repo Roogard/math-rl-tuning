@@ -1,29 +1,21 @@
-"""
+r"""
 Reward functions for GRPO reinforcement learning.
 
-Matches the official Unsloth GRPO notebook pattern.
 TRL passes completions as list of list of message dicts:
     completions = [[{"role": "assistant", "content": "..."}], ...]
 
-Five reward functions (matching official notebook):
-  1. correctness  — exact match of extracted answer (2.0 if correct)
-  2. int_check    — is the extracted answer an integer? (0.5)
-  3. strict_format — perfect XML structure (0.5)
-  4. soft_format   — relaxed XML structure (0.5)
-  5. xmlcount      — graduated per-tag scoring (up to 0.5)
+Five reward functions:
+  1. correctness    — semantic match of \boxed{} answer via math-verify (2.0)
+  2. int_check      — is the extracted answer an integer? (0.5)
+  3. boxed_format   — does the output contain \boxed{}? (0.5)
+  4. strict_format  — output ends cleanly with \boxed{} (0.5)
+  5. boxed_count    — graduated scoring for \boxed{} usage (up to 0.5)
 """
 
 import re
-from typing import List
 
 from math_rl_tuning.config import RewardsConfig
-
-
-def _extract_xml_answer(text: str) -> str:
-    """Extract content from <answer>...</answer> tags."""
-    answer = text.split("<answer>")[-1]
-    answer = answer.split("</answer>")[0]
-    return answer.strip()
+from math_rl_tuning.utils import extract_boxed, math_verify_equal
 
 
 def _get_content(completion) -> str:
@@ -36,69 +28,56 @@ def _get_content(completion) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Reward functions (matching official Unsloth notebook)
+# Reward functions
 # ---------------------------------------------------------------------------
 
 def correctness_reward_func(prompts, completions, answer, **kwargs) -> list[float]:
-    """Semantic match of extracted answer vs ground truth using math-verify."""
-    from math_verify import parse, verify
-
+    r"""Semantic match of extracted \boxed{} answer vs ground truth using math-verify."""
     responses = [_get_content(c) for c in completions]
-    extracted = [_extract_xml_answer(r) for r in responses]
-    rewards = []
-    for r, a in zip(extracted, answer):
-        try:
-            gold = parse(a, extraction_mode="first_match")
-            pred = parse(r, extraction_mode="first_match")
-            rewards.append(2.0 if verify(gold, pred) else 0.0)
-        except Exception:
-            rewards.append(0.0)
-    return rewards
+    extracted = [extract_boxed(r) for r in responses]
+    return [2.0 if math_verify_equal(a, e) else 0.0 for e, a in zip(extracted, answer)]
 
 
 def int_reward_func(completions, **kwargs) -> list[float]:
-    """Check if extracted answer is a pure integer."""
+    r"""Check if extracted \boxed{} answer is a pure integer."""
     responses = [_get_content(c) for c in completions]
-    extracted = [_extract_xml_answer(r) for r in responses]
-    return [0.5 if r.isdigit() else 0.0 for r in extracted]
+    extracted = [extract_boxed(r) or "" for r in responses]
+    return [0.5 if e.isdigit() else 0.0 for e in extracted]
+
+
+def boxed_format_reward_func(completions, **kwargs) -> list[float]:
+    r"""Reward for using \boxed{} format in the answer."""
+    responses = [_get_content(c) for c in completions]
+    return [0.5 if "\\boxed{" in r else 0.0 for r in responses]
 
 
 def strict_format_reward_func(completions, **kwargs) -> list[float]:
-    """Exact XML format: <reasoning>\\n...\\n</reasoning>\\n<answer>\\n...\\n</answer>\\n"""
-    pattern = r"^<reasoning>\n.*?\n</reasoning>\n<answer>\n.*?\n</answer>\n$"
+    r"""Reward for clean format: reasoning followed by \boxed{} near the end."""
+    pattern = r"\\boxed\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}\s*\.?\s*$"
     responses = [_get_content(c) for c in completions]
-    matches = [re.match(pattern, r, re.DOTALL) for r in responses]
-    return [0.5 if match else 0.0 for match in matches]
+    return [0.5 if re.search(pattern, r) else 0.0 for r in responses]
 
 
-def soft_format_reward_func(completions, **kwargs) -> list[float]:
-    """Relaxed XML format: <reasoning>...</reasoning> then <answer>...</answer>"""
-    pattern = r"<reasoning>.*?</reasoning>\s*<answer>.*?</answer>"
-    responses = [_get_content(c) for c in completions]
-    matches = [re.match(pattern, r, re.DOTALL) for r in responses]
-    return [0.5 if match else 0.0 for match in matches]
+def _score_boxed(text: str) -> float:
+    """Graduated scoring for boxed answer format."""
+    score = 0.0
+    if "\\boxed{" in text:
+        score += 0.25
+    boxed = extract_boxed(text)
+    if boxed is not None:
+        score += 0.125
+        # Penalize trailing text after boxed (model should stop after the answer)
+        last_boxed_end = text.rfind("}")
+        trailing = text[last_boxed_end + 1:].strip() if last_boxed_end != -1 else ""
+        if len(trailing) < 20:
+            score += 0.125
+    return score
 
 
-def _count_xml(text: str) -> float:
-    """Graduated scoring for individual XML tags."""
-    count = 0.0
-    if text.count("<reasoning>\n") == 1:
-        count += 0.125
-    if text.count("\n</reasoning>\n") == 1:
-        count += 0.125
-    if text.count("\n<answer>\n") == 1:
-        count += 0.125
-        count -= len(text.split("\n</answer>\n")[-1]) * 0.001
-    if text.count("\n</answer>") == 1:
-        count += 0.125
-        count -= (len(text.split("\n</answer>")[-1]) - 1) * 0.001
-    return count
-
-
-def xmlcount_reward_func(completions, **kwargs) -> list[float]:
-    """Graduated XML tag scoring."""
+def boxed_count_reward_func(completions, **kwargs) -> list[float]:
+    r"""Graduated \boxed{} format scoring."""
     contents = [_get_content(c) for c in completions]
-    return [_count_xml(c) for c in contents]
+    return [_score_boxed(c) for c in contents]
 
 
 # ---------------------------------------------------------------------------
@@ -106,8 +85,11 @@ def xmlcount_reward_func(completions, **kwargs) -> list[float]:
 # ---------------------------------------------------------------------------
 
 def build_reward_functions(rewards_cfg: RewardsConfig = None):
-    """
-    Return list of reward functions matching the official Unsloth notebook.
+    r"""
+    Return list of reward functions for GRPO training.
+
+    All functions expect model completions to use \boxed{} format
+    (matching the system prompt used in both SFT and GRPO).
 
     Usage::
 
@@ -115,8 +97,8 @@ def build_reward_functions(rewards_cfg: RewardsConfig = None):
         trainer = GRPOTrainer(reward_funcs=reward_fns, ...)
     """
     return [
-        xmlcount_reward_func,
-        soft_format_reward_func,
+        boxed_count_reward_func,
+        boxed_format_reward_func,
         strict_format_reward_func,
         int_reward_func,
         correctness_reward_func,

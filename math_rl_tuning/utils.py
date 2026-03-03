@@ -152,38 +152,27 @@ def extract_boxed(text: str) -> Optional[str]:
     return result
 
 
-def extract_xml_answer(text: str) -> str:
-    r"""
-    Extract content from the last ``\boxed{...}`` in *text*.
-
-    Handles nested braces correctly. Falls back to the raw text
-    if no ``\boxed{`` is found.
+def math_verify_equal(gold_answer: str, pred_answer: str) -> bool:
     """
-    if "\\boxed{" not in text:
-        return text.strip()
-    idx = text.rfind("\\boxed{")
-    depth = 1
-    i = idx + len("\\boxed{")
-    while i < len(text) and depth > 0:
-        if text[i] == '{':
-            depth += 1
-        elif text[i] == '}':
-            depth -= 1
-        i += 1
-    if depth == 0:
-        return text[idx + len("\\boxed{"):i - 1].strip()
-    return text.strip()
+    Compare two extracted answer strings using math-verify.
 
-
-def extract_xml_tag_answer(text: str) -> Optional[str]:
+    Both inputs should be the answer itself (e.g. ``\\dfrac{17}{32}``),
+    NOT the full solution text. Use ``extract_boxed()`` first to get them.
     """
-    Extract the content from ``<answer>...</answer>`` XML tags.
+    if not gold_answer or not pred_answer:
+        return False
+    try:
+        from math_verify import parse, verify
 
-    Returns None if no answer tag is found.
-    """
-    match = re.search(r"<answer>(.*?)</answer>", text, flags=re.DOTALL)
-    if match:
-        return match.group(1).strip()
-    return None
+        gold_parsed = parse(gold_answer, extraction_mode="first_match")
+        if len(gold_parsed) == 0:
+            return False
+        pred_parsed = parse(pred_answer, extraction_mode="first_match")
+        if len(pred_parsed) == 0:
+            return False
+        return bool(verify(gold_parsed, pred_parsed))
+    except Exception:
+        return False
+
 
 

@@ -1,0 +1,511 @@
+model,problem_snippet,ground_truth,predicted,is_correct,full_output
+SFT,"Given the function $f(x)=|x+1|-|x-2|$.
+$(1)$ Find the solution set of the inequa","(-\infty, \dfrac {5}{4}]","[1, +\infty)",False,"To solve the given problem, we will follow the steps outlined in the reference solution closely.
+
+### Part 1: Solution Set of $f(x) \geqslant 1$
+
+#### Step 1: Define the Function $f(x)$
+
+Given $f(x) = |x+1| - |x-2|$, we need to consider different cases based on the value of $x$.
+
+#### Case 1: $x \leqslant -1$
+
+For $x \leqslant -1$, both $x+1$ and $x-2$ are negative, so we have:
+\[f(x) = -(x+1) - (-(x-2)) = -x-1+x-2 = -3.\]
+Since $-3 < 1$, there are no solutions in this case.
+
+#### Case 2: $-1 < "
+SFT,4 pints of a 5% antifreeze solution and 8 pints of a 20% antifreeze solution mus,15\%,15\%,True,"To solve this problem, we follow these steps:
+
+1. **Calculate the amount of antifreeze in each solution**:
+   - For the 5% solution: $4 \times 0.05 = 0.2$ pints of antifreeze.
+   - For the 20% solution: $8 \times 0.20 = 1.6$ pints of antifreeze.
+
+2. **Sum the amounts of antifreeze from both solutions**:
+   - Total antifreeze: $0.2 + 1.6 = 1.8$ pints.
+
+3. **Determine the total volume of the mixture**:
+   - The total volume is given as $12$ pints.
+
+4. **Calculate the percentage of antifreeze in th"
+SFT,"what is the sum of 100 consecutive integers from - 49 inclusive , in a increasin",50,50,True,"To find the sum of 100 consecutive integers starting from -49, we can use the formula for the sum of an arithmetic series, which is $S = \frac{n}{2}(a_1 + a_n)$, where $n$ is the number of terms, $a_1$ is the first term, and $a_n$ is the last term.
+
+**Step 1: Identify the first and last terms.**
+- The first term ($a_1$) is -49.
+- The last term ($a_n$) is found by adding 99 to the first term because there are 100 terms in total, including the first one. So, $a_n = -49 + 99 = 50$.
+
+**Step 2: Apply"
+SFT,"The average math scores of classes A and B are $87$ and $82$ points, respectivel",B,B,False,"To solve this problem, we need to understand how the average score changes when Xiaoming moves from class A to class B. Let's denote the number of students in class A as $a$ and in class B as $b$. The total scores of class A and class B before Xiaoming's move can be represented as $87a$ and $82b$, respectively.
+
+When Xiaoming moves from class A to class B, the new total scores for both classes become $(87a - x)$ for class A and $(82b + x)$ for class B, where $x$ is Xiaoming's score. The new aver"
+SFT,Billy worked for 3 straight hours on his homework questions. He solved 132 quest,3:1,3,True,"To solve this problem, let's break it down into steps based on the information provided:
+
+1. **Determine the number of questions solved in the second hour:** Since Billy solved twice as many questions in the third hour compared to the second hour, we can express the number of questions solved in the second hour as half of the third hour's questions. Therefore, the number of questions solved in the second hour is $\frac{132}{2} = 66$ questions.
+
+2. **Calculate the total number of questions solved"
+SFT,All the students of the class are told to sit in a circle shape. The boy at the ,70,70,True,"To solve this problem, we need to understand that when students are sitting in a circle and one student is directly opposite another, it means they are separated by half the total number of students in the circle. This is because if you draw a line connecting two students who are directly opposite each other, it would pass through the center of the circle, effectively dividing the circle into two equal halves.
+
+Given that the 10th boy is directly opposite the 45th boy, we can calculate the total"
+SFT,"Let the function $f(x)=\sin (4x+ \frac {\pi}{4})$ where $x\in[0, \frac {9\pi}{16",B,\frac{5\pi}{4},False,"To solve the problem, we follow these steps closely aligned with the solution provided:
+
+1. **Identify the Range of $f(x)$**: Given that $x\in[0, \frac {9\pi}{16}]$, we calculate the range of $4x+\frac{\pi}{4}$ as follows:
+   \[
+   4x+\frac{\pi}{4}\in[\frac{\pi}{4}, \frac{9\pi}{4}+\frac{\pi}{4}] = [\frac{\pi}{4}, \frac{10\pi}{4}] = [\frac{\pi}{4}, \frac{5\pi}{2}]
+   \]
+   This means the function $f(x)$ can take values in the interval $[-1, 1]$ because the sine function oscillates between -1 and "
+SFT,"Given the set $M={x|y=\sqrt{-x^2+2x+8}}$ and the set $N={x|y=|x|+1}$, determine ",\text{A: } {x|-2 \leqslant x \leqslant 4},A,False,"To determine the intersection of sets $M$ and $N$, we first need to understand the conditions that define each set.
+
+For set $M$, the condition is given by the expression under the square root in the definition of $M$: $y=\sqrt{-x^2+2x+8}$. For the square root to be defined, the expression inside it must be non-negative. Therefore, we have:
+$$-x^2+2x+8 \geqslant 0.$$
+
+This inequality can be factored into:
+$$(x+2)(x-4) \leqslant 0.$$
+
+Solving this inequality gives us the range of $x$ values for w"
+SFT,"While playing a game, Kaleb had 98 lives. After losing some lives, he had a cert",73,73,True,"To solve this problem, we start with the total number of lives Kaleb had initially, which is 98. We then subtract the number of lives he lost, which is 25, to find out how many lives he has left.
+
+\[ \text{Lives left} = \text{Initial lives} - \text{Lost lives} \]
+\[ \text{Lives left} = 98 - 25 \]
+\[ \text{Lives left} = 73 \]
+
+Therefore, after losing 25 lives, Kaleb had $\boxed{73}$ lives left."
+SFT,"Consider a sequence $\{a_n\}$ defined as follows: 1, -2, -2, 3, 3, 3, -4, -4, -4",31^2 + 47 = 1008,63,False,"To solve the problem, we need to understand the behavior of the sequence $\{a_n\}$ and how it affects the sum $S_n$. The sequence alternates between positive and negative integers, with each integer $k$ appearing $k$ times. This pattern can be described as follows:
+
+- For $k=1$, $a_n = 1$ for $1 \leq n \leq 1$.
+- For $k=2$, $a_n = -2$ for $2 \leq n \leq 3$.
+- For $k=3$, $a_n = 3$ for $4 \leq n \leq 6$.
+- And so on...
+
+The sum $S_n$ is the cumulative sum of the sequence up to the $n$-th term. To "
+SFT,Aston has accidentally torn apart his comics and needs to put all the pages back,11,11,True,"To solve this problem, we follow these steps:
+
+1. First, we calculate the total number of comics Aston can make from the torn pages. Since each comic has 25 pages, and he has found 150 pages, we divide the total pages by the pages per comic:
+\[ \frac{150}{25} = 6 \]
+This means Aston can make 6 comics from the torn pages.
+
+2. Next, we add the newly made comics to the comics that were already in the box. There were 5 untorn comics initially, so adding the 6 new comics gives us:
+\[ 5 + 6 = 11 \]
+
+T"
+SFT,"In Mary's class, there are 35 students. Their teacher told them they could pay $",\$1397.50,\$1697.50,False,"To calculate the total amount gathered by the class, we need to consider the contributions from each group of students and add the administrative fee. 
+
+First, let's calculate the total contribution from the 20 students who paid the full amount:
+\[20 \times \$50 = \$1000\]
+
+Next, for the 5 students with high merit who received a 25% discount, their payment per student is calculated as follows:
+\[\$50 - (\$50 \times 25\%) = \$50 - \$12.50 = \$37.50\]
+So, the total contribution from these students"
+SFT,The point corresponding to the complex number $\dfrac{i^{2014}}{1 + i}(i)$ in th,B,\text{B},False,"To solve the problem, we follow these steps closely aligned with the solution provided:
+
+1. **Simplify the Expression**: We start by simplifying the given expression $\dfrac{i^{2014}}{1 + i}$. Since $i^4 = 1$, we can reduce the exponent modulo 4. Thus, $i^{2014} = (i^4)^{503} \cdot i^2 = 1^{503} \cdot (-1) = -1$. So, the expression becomes $\dfrac{-1}{1 + i}$.
+
+2. **Rationalize the Denominator**: To simplify further, we multiply both the numerator and the denominator by the conjugate of the deno"
+SFT,A bullet train 240 m long is running with a speed of 100 kmph. In what time will,8,8,True,"To solve this problem, we follow these steps:
+
+1. **Convert the speeds to consistent units**: The speed of the bullet train is given in kilometers per hour (kmph), while the speed of the man is also in kmph. We need to convert these speeds into meters per second (m/s) to make them compatible for calculation. 
+
+   - For the bullet train: $100 \text{ kmph} = 100 \times \frac{5}{18} \text{ m/s} = \frac{500}{18} \text{ m/s} = \frac{250}{9} \text{ m/s}$.
+   - For the man: $8 \text{ kmph} = 8 \times \"
+SFT,A train is travelling at a certain speed and crosses a pole in 5 seconds. The le,90.0072,90,False,"To solve this problem, we follow these steps:
+
+1. **Identify the given data**:
+   - Length of the train ($L$) = 125.01 meters
+   - Time taken to cross a pole ($t$) = 5 seconds
+
+2. **Calculate the speed in meters per second (m/s)**:
+   - Speed ($v$) = $\frac{\text{Distance}}{\text{Time}}$
+   - Substituting the given values, we get $v = \frac{125.01}{5} = 25.002$ m/s
+
+3. **Convert the speed from m/s to km/h**:
+   - To convert from m/s to km/h, we multiply by 18/5 because there are 1000 meters in a"
+SFT,"Given the planar vectors $\vec{a}=(2,4)$, $\vec{b}=(-1,k)$, and $\vec{a} \parall","(3,6)","(3,6)",False,"To solve the problem, we start by understanding that if two vectors are parallel, their components are proportional. Given $\vec{a}=(2,4)$ and $\vec{b}=(-1,k)$, and knowing that $\vec{a} \parallel \vec{b}$, we can set up the proportion based on their components:
+
+\[
+\frac{2}{-1} = \frac{4}{k}
+\]
+
+Solving this proportion for $k$ gives us:
+
+\[
+2k = -4 \implies k = -2
+\]
+
+With $k$ found, we substitute it into the vector $\vec{b}$ to get $\vec{b}=(-1,-2)$. Now, we need to find $2\vec{a}+\vec{b}$. Fi"
+SFT,The distance from the center of the circle \\({{x}^{2}}+{{y}^{2}}-2x-8y+13=0\\) ,\text{A},A,False,"To solve this problem, we follow these steps closely aligned with the provided solution:
+
+1. **Identify the center of the circle**: The given equation of the circle is ${x}^{2}+{y}^{2}-2x-8y+13=0$. To find its center, we complete the square for both $x$ and $y$ terms. This gives us:
+   \[
+   (x-1)^2 + (y-4)^2 = 2,
+   \]
+   indicating that the center of the circle is at $(1, 4)$.
+
+2. **Calculate the distance from the center to the line**: The distance $d$ from a point $(x_0, y_0)$ to a line $Ax +"
+SFT,Lily got a new puppy for her birthday.  She was responsible for feeding the pupp,25,25,True,"To calculate the total amount of food the puppy will eat over the next 4 weeks, including today, we break down the calculation into two parts based on the feeding schedule for each period.
+
+**For the first 2 weeks:**
+- The puppy eats $\frac{1}{4}$ cup of food three times a day.
+- Therefore, in one day, the puppy eats $3 \times \frac{1}{4} = \frac{3}{4}$ cups of food.
+- Over 2 weeks (14 days), the puppy eats $14 \times \frac{3}{4} = 10.5$ cups of food.
+
+**For the following 2 weeks:**
+- The puppy "
+SFT,The graph of the function $y= \sqrt{3}\cos x + \sin x$ ($x \in \mathbb{R}$) is s,A,\frac{\pi}{3},False,"To solve this problem, we start by expressing the given function in a more convenient form. The function is $y = \sqrt{3}\cos x + \sin x$. We can rewrite this as:
+
+\[y = 2\left(\frac{\sqrt{3}}{2}\cos x + \frac{1}{2}\sin x\right)\]
+
+Recognizing that $\frac{\sqrt{3}}{2}$ and $\frac{1}{2}$ are the cosine and sine of $\frac{\pi}{6}$ respectively, we can further simplify the expression to:
+
+\[y = 2\left(\cos\frac{\pi}{6}\cos x + \sin\frac{\pi}{6}\sin x\right)\]
+
+Using the angle addition formula for c"
+SFT,Determine the binomial term with the largest coefficient in the expansion of the,7\text{th},T_5,False,"To determine the binomial term with the largest coefficient in the expansion of the polynomial $\left(1-x\right)^{10}$, we follow these steps:
+
+1. **Identify the General Term**: The general term in the expansion of $\left(1-x\right)^{10}$ can be written as $T_{r+1} = C_{10}^{r} \cdot 1^{10-r} \cdot (-x)^r$, where $C_{10}^{r}$ represents the binomial coefficient.
+
+2. **Express the Coefficient**: The coefficient of the $(r+1)$th term is thus $C_{10}^{r} \cdot (-1)^r$.
+
+3. **Compare Consecutive Ter"
+SFT,"Given that $α$ is an angle in the third quadrant, $f(α)= \frac{\sin (π-α)·\cos (",\frac{1}{2},\frac{1}{2},True,"To solve the given problem, we will follow the steps outlined in the reference solution, ensuring each step is detailed and clear.
+
+### Part 1: Simplify $f(α)$
+
+Given:
+\[f(α)= \frac{\sin (π-α)·\cos (2π-α)·\tan (-α-π)}{\tan (-α)·\sin (-π-α)}\]
+
+We simplify each trigonometric function using their properties:
+- $\sin (π-α) = \sin α$
+- $\cos (2π-α) = \cos α$
+- $\tan (-α-π) = \tan (-α) = -\tan α$
+- $\tan (-α) = -\tan α$
+- $\sin (-π-α) = -\sin (π+α) = \sin α$
+
+Substituting these into the original expr"
+SFT,You have 2 chances to draw from the basket. How many ways exist to draw a fruit ,20,20,True,"To solve this problem, we consider the two draws as separate events since the order in which we draw the fruits matters. 
+
+For the first draw, we have 5 different fruits to choose from. Therefore, there are $5$ possible outcomes for the first draw.
+
+After drawing the first fruit, we have 4 fruits left in the basket. For the second draw, we can choose any of these remaining 4 fruits. Thus, there are $4$ possible outcomes for the second draw.
+
+Since each draw is independent of the other, the total"
+SFT,"15 years hence , rohan will be just 4 times as old as he was 15 years ago . how ",25,25,True,"Let's denote Rohan's current age as $R$.
+
+**Understand**: We need to find Rohan's current age based on the given conditions about his age in the future and past.
+
+**Plan**: We can set up an equation based on the given information. The condition states that 15 years from now, Rohan's age will be 4 times what it was 15 years ago. This gives us the equation:
+\[R + 15 = 4(R - 15)\]
+
+**Solve**: Let's solve this equation step by step.
+
+First, distribute the 4 on the right side of the equation:
+\[R + 1"
+SFT,Arnold's collagen powder has 18 grams of protein for every 2 scoops.  His protei,86,86,True,"To solve this problem, we follow these steps:
+
+1. Calculate the protein content in Arnold's collagen powder for 1 scoop. Since 2 scoops contain 18 grams of protein, 1 scoop would contain half of that amount:
+\[ \frac{18}{2} = 9 \text{ grams of protein per scoop} \]
+
+2. Add the protein content from the collagen powder (1 scoop), the protein powder (1 scoop), and the steak together:
+\[ 9 \text{ grams (collagen powder)} + 21 \text{ grams (protein powder)} + 56 \text{ grams (steak)} = 86 \text{ gram"
+SFT,"If $\cos\left(\frac{\pi}{8}-\alpha\right) = \frac{1}{6}$, then the value of $\co",\dfrac{17}{18},\frac{17}{18},False,"To solve the problem, we start with the given equation and manipulate it to find the desired value. 
+
+Given that $\cos\left(\frac{\pi}{8}-\alpha\right) = \frac{1}{6}$, we want to find the value of $\cos\left(\frac{3\pi}{4}+2\alpha\right)$. 
+
+First, we express $\cos\left(\frac{3\pi}{4}+2\alpha\right)$ in terms of $\cos\left(\frac{\pi}{8}-\alpha\right)$ and $\sin\left(\frac{\pi}{8}-\alpha\right)$. This can be done by recognizing that $\frac{3\pi}{4}+2\alpha$ can be rewritten as $\pi - \left(\frac{"
+SFT,What is the largest multiple of 10 for which the average (arithmetic mean) of al,\(10n,400,False,"To solve this problem, we follow these steps closely aligned with the given solution:
+
+1. **Identify the pattern in the sum of multiples of 10**: The sum of the first $n$ multiples of 10 can be expressed as $10(1+2+\cdots+n)$. This simplifies to $10\left(\frac{n(n+1)}{2}\right)$ because the sum of the first $n$ natural numbers is $\frac{n(n+1)}{2}$.
+
+2. **Calculate the total sum of multiples of 10 up to a certain number**: Let's denote the largest multiple of 10 for which the average of all mult"
+SFT,"Given the sets $M=\{x|x= \frac {k}{2}+ \frac {1}{4},k\in\mathbb{Z}\}$ and $N=\{x",B,B,False,"To determine the relationship between the sets \(M\) and \(N\), we start by expressing the elements of each set in a more comparable form.
+
+For set \(M\):
+\[ M = \left\{ x \mid x = \frac{k}{2} + \frac{1}{4}, k \in \mathbb{Z} \right\} \]
+We can rewrite \(x\) as:
+\[ x = \frac{2k + 1}{4} \]
+This shows that every element of \(M\) is of the form \(\frac{2k + 1}{4}\), where \(k\) is an integer.
+
+For set \(N\):
+\[ N = \left\{ x \mid x = \frac{k}{4} + \frac{1}{2}, k \in \mathbb{Z} \right\} \]
+We can rew"
+SFT,"In the Cartesian coordinate system, there is a point $P$ in the second quadrant.","\text{A: }(-5,4)",\text{A},False,"To determine the coordinates of point $P$ in the second quadrant, we consider its distances from the axes. 
+
+Given that the distance from point $P$ to the $x$-axis is $4$, and knowing that in the second quadrant, the $y$-coordinate is positive, we can deduce that the $y$-coordinate of $P$ is $4$.
+
+Similarly, since the distance from point $P$ to the $y$-axis is $5$, and considering that in the second quadrant, the $x$-coordinate is negative, we conclude that the $x$-coordinate of $P$ is $-5$.
+
+Th"
+SFT,"If $m$ is a root of the equation $x^{2}-6x-5=0$, then the value of the algebraic",6,6,True,"To solve the given problem, we start with the fact that $m$ is a root of the equation $x^{2}-6x-5=0$. This means that when we substitute $m$ into the equation, it satisfies the equation. Therefore, we have:
+
+\[m^{2}-6m-5=0\]
+
+From this equation, we can rearrange it to express $m^{2}-6m$ in terms of a constant:
+
+\[m^{2}-6m = 5\]
+
+Now, we need to find the value of the expression $11+6m-m^{2}$. We can rewrite this expression by adding and subtracting $5$:
+
+\[11+6m-m^{2} = 11-(m^{2}-6m)\]
+
+Since we "
+SFT,The deployment of China's Beidou satellite navigation system has been completed.,2.15 \times 10^{7},2.15 \times 10^{7},True,"To express $21500000$ in scientific notation, we follow these steps:
+
+1. Identify the significant digits: The number $21500000$ has three significant digits, which are $2$, $1$, and $5$.
+2. Place the decimal after the first non-zero digit: This gives us $2.15$.
+3. Count the number of places the decimal has moved: The decimal has moved $7$ places to the left to get from $21500000$ to $2.15$.
+4. Write the number in scientific notation: This involves multiplying the significant digits by $10$ raise"
+SFT,"A and B participate in a shooting game. According to the rules, hitting the targ",\text{D},\frac{1}{4},False,"To solve this problem, we follow these steps closely aligned with the solution provided:
+
+1. **Identify the Events**: The event of interest is that the sum of the scores of A and B from one shot each is 2. This can happen in two ways:
+   - Both A and B miss the target, scoring 0 points each.
+   - Both A and B hit the target, scoring 2 points each.
+
+2. **Calculate the Probability of Missing the Target**: Since A's hit rate is $\frac{3}{5}$, the probability of A missing the target is $1 - \frac{3}"
+SFT,"Among the following groups of vectors, the one that can represent the vector $\o",\text{B},\text{B},False,"To determine which group of vectors can represent the vector $\overrightarrow{a} = (3, -2)$, we need to check if there exist scalars $k_1$ and $k_2$ such that $\overrightarrow{a} = k_1\overrightarrow{e_1} + k_2\overrightarrow{e_2}$ for each option.
+
+**Option A:**
+
+Given $\overrightarrow{e_1} = (0, 0)$ and $\overrightarrow{e_2} = (1, 2)$, we have:
+\[k_1\overrightarrow{e_1} + k_2\overrightarrow{e_2} = (0, 0) + (k_2, 2k_2) = (k_2, 2k_2)\]
+For this to equal $(3, -2)$, we would need $k_2 = 3$ and $2k"
+SFT,"In a community of 120 families, 25 families own 4 dogs and 2 cats, 30 families o",5,230 + 130 + 90 + 180 + 5 = 635,False,"To solve this problem, we will break it down into parts based on the different types of pets owned by the families and calculate the total number of each type of pet.
+
+**Dogs:**
+- Families owning 4 dogs and 2 cats: $25 \times 4 = 100$ dogs.
+- Families owning 3 dogs, 2 cats, and 1 bird: $30 \times 3 = 90$ dogs.
+- Families owning 2 dogs, 1 cat, and 3 birds: $20 \times 2 = 40$ dogs.
+- Total dogs: $100 + 90 + 40 = 230$ dogs.
+
+**Cats:**
+- Families owning 4 dogs and 2 cats: $25 \times 2 = 50$ cats.
+- "
+SFT,"$(1)$ Calculate: $\sqrt{9}-\sqrt[3]{8}+\sqrt{0.01}$.  
+$(2)$ Solve the system of",1.1,"x=2, y=-1",False,"To solve the given problems, we proceed as follows:
+
+### Problem 1: Calculate $\sqrt{9}-\sqrt[3]{8}+\sqrt{0.01}$
+
+**Step 1:** Calculate each term separately.
+- For $\sqrt{9}$, we have $\sqrt{9} = 3$ because $3^2 = 9$.
+- For $\sqrt[3]{8}$, we have $\sqrt[3]{8} = 2$ because $2^3 = 8$.
+- For $\sqrt{0.01}$, we recognize that $0.01 = 10^{-2}$, so $\sqrt{0.01} = \sqrt{10^{-2}} = 10^{-1} = 0.1$.
+
+**Step 2:** Combine the results.
+- Therefore, $\sqrt{9}-\sqrt[3]{8}+\sqrt{0.01} = 3 - 2 + 0.1 = 1.1$.
+
+So, "
+SFT,Two trains are moving in the same direction at 144 kmph and 72 kmph. The faster ,380,380 \text{ m},True,"To solve this problem, we follow these steps closely aligned with the given solution:
+
+1. **Convert speeds to consistent units**: Since the speeds are given in kilometers per hour (kmph), we convert them to meters per second (m/s) for easier calculation. The conversion factor is $1 \text{ kmph} = \frac{5}{18} \text{ m/s}$.
+
+   - For the faster train: $144 \text{ kmph} = 144 \times \frac{5}{18} = 40 \text{ m/s}$
+   - For the slower train: $72 \text{ kmph} = 72 \times \frac{5}{18} = 20 \text{ m/s}"
+SFT,Write down the equation of a circle that is tangent to the circle $x^{2}+y^{2}=1,(x+2\sqrt{3}+3)^{2}+(y-2-\sqrt{3})^{2}=21+12\sqrt{3},(x-2)^2 + y^2 = 4,False,"To find the equation of a circle that is tangent to the circle $x^{2}+y^{2}=1$ externally, and tangent to the line $y=\frac{\sqrt{3}}{3}x$ and the $y$-axis, we follow these steps:
+
+1. **Identify the center and radius of the given circle**: The given circle is centered at $(0,0)$ with a radius of $1$. This can be seen directly from its equation $x^{2}+y^{2}=1$.
+
+2. **Determine the center of the desired circle**: Since the desired circle is tangent to the $y$-axis, its center must have coordinates"
+SFT,"Given that the line $y=kx$ is a tangent to the function $y=\ln x$, find the valu",\dfrac{1}{e},\frac{1}{e},False,"To find the value of $k$ such that the line $y=kx$ is tangent to the function $y=\ln x$, we follow these steps:
+
+1. **Find the derivative of $y=\ln x$:** The derivative of $\ln x$ with respect to $x$ is $\frac{1}{x}$. This gives us the slope of the tangent line at any point on the curve $y=\ln x$.
+
+2. **Set up the equation for the tangent line:** Since the tangent line is also given by $y=kx$, we know that its slope is $k$. Therefore, at the point of tangency $(x_0, y_0)$, the slope of the tange"
+SFT,"A line passing through the focus $F$ of the parabola $C: y^2 = 2px (p > 0)$, wit",C,8\sqrt{3},False,"To solve the problem, we follow these steps closely aligned with the solution provided:
+
+1. **Identify the Focus and Directrix of the Parabola**:
+   - The given parabola is $C: y^2 = 2px$. For a parabola of this form, the focus is at $(\frac{p}{2}, 0)$ and the directrix is the line $x = -\frac{p}{2}$.
+
+2. **Find the Coordinates of Point $M$**:
+   - The line passing through the focus $F(\frac{p}{2}, 0)$ with a slope of $\sqrt{3}$ can be represented as $y = \sqrt{3}(x - \frac{p}{2})$. To find the "
+SFT,"Given a sequence ${a_n}$ with the sum of its first $n$ terms denoted as $S_n$, i",768,768,True,"To find the value of $a_6$ in the given sequence, we start by understanding the relationship between consecutive terms and their sums. The given conditions are $a_1 = 1$ and $a_{n+1} = 3S_n$ for all positive integers $n$. 
+
+First, let's express $S_n$ in terms of $a_n$ and $a_{n+1}$:
+\[S_n = S_{n-1} + a_n.\]
+
+Given that $a_{n+1} = 3S_n$, we can substitute $S_n$ with $S_{n-1} + a_n$:
+\[a_{n+1} = 3(S_{n-1} + a_n).\]
+
+Since $S_{n-1} = S_n - a_n$, we can rewrite the equation as:
+\[a_{n+1} = 3(S_n - a"
+SFT,A baker is making bread according to a recipe that requires him to use 3 eggs fo,6,6,True,"To solve this problem, we follow these steps:
+
+1. **Identify the ratio of eggs to flour**: The recipe requires 3 eggs for every 2 cups of flour. This gives us a ratio of $\frac{3}{2}$ eggs per cup of flour.
+
+2. **Determine the number of cups of flour needed for 9 eggs**: Since the baker needs 9 eggs, we can set up a proportion based on the ratio found in step 1. We want to find out how many cups of flour ($x$) correspond to 9 eggs. This can be represented as $\frac{3}{2} = \frac{9}{x}$.
+
+3. **So"
+SFT,"two cars start from the opposite places of a main road , 150 km apart . first ca",65,100 \text{ km},False,"To solve this problem, let's follow the steps closely related to the given solution but with more detailed explanations:
+
+1. **Understanding the Problem**: We have two cars starting from opposite ends of a 150 km long main road. The first car makes several turns and travels a total of 65 km (25 km + 15 km + 25 km), while the second car travels 35 km along the main road due to a breakdown.
+
+2. **Calculating the Distance Traveled by the First Car**: The first car travels 25 km straight, then 15 km"
+SFT,Calculate:<br/>$(1) a^{6} \div a^{2}$;<br/>$(2) m^{2} \cdot m^{4} - (2m^{3})^{2},-3m^{6},-3m^{6},True,"To solve the given problems, we follow the rules of exponents and algebraic operations closely.
+
+### For $(1) a^{6} \div a^{2}$:
+
+We apply the rule that when dividing powers with the same base, we subtract the exponents:
+\[a^{6} \div a^{2} = a^{6-2}\]
+
+This simplifies to:
+\[= a^{4}\]
+
+So, the solution for $(1)$ is $\boxed{a^{4}}$.
+
+### For $(2) m^{2} \cdot m^{4} - (2m^{3})^{2}$:
+
+First, we simplify each part separately. For the multiplication of powers with the same base, we add the exponents:
+\"
+SFT,"A pet store had eighty-five gerbils. If they sold sixty-nine of them, how many w",16,16,True,"Understand: The problem asks for the number of gerbils remaining after some were sold.
+Plan: Subtract the number of gerbils sold from the original number to find the remaining number.
+Solve: 
+- Original number of gerbils: 85
+- Number of gerbils sold: 69
+- Remaining gerbils: $85 - 69 = 16$
+
+Verify: The calculation shows that after selling 69 gerbils out of 85, there are indeed 16 left. ✓
+
+The answer is \boxed{16}."
+SFT,"In a renowned city, the average birth rate is some people every two seconds and ",4,4,True,"To solve this problem, we need to understand how the birth and death rates contribute to the net increase in population over a day. Let's break it down step by step:
+
+1. **Understanding the Net Increase**: The net increase in population per second is calculated by subtracting the death rate from the birth rate. Since the birth rate is some people every two seconds and the death rate is 2 people every two seconds, the net increase per two seconds is the birth rate minus 2.
+
+2. **Calculating the N"
+SFT,"A supermarket sells a certain product with a profit of $50$ dollars per item, an",2200,\text{No},False,"To solve the problem, we will follow the steps outlined in the reference solution closely.
+
+### Part (1)
+
+Given that the supermarket sells a product with a profit of $50$ dollars per item and on average, they can sell $30$ items per day. For every $1$ dollar reduction in price, they can sell an additional $2$ items per day. 
+
+When the price is reduced by $5$ dollars, the number of items sold increases by $2 \times 5 = 10$ items. Therefore, the new daily sales volume is $30 + 10 = 40$ items. The "
+SFT,"Given the inequality $|x-a|+|x+b| \geqslant 3$, the solution set is $\mathbb{R}$","(-\infty,-3) \cup (3,+\infty)","(-\infty,-3] \cup [3,+\infty)",False,"To solve the inequality $|x-a|+|x+b| \geqslant 3$ with the condition that its solution set is $\mathbb{R}$, we need to consider the properties of absolute values and how they behave in inequalities.
+
+First, let's understand the behavior of the expression $|x-a|+|x+b|$. This expression represents the sum of distances from $x$ to $a$ and from $x$ to $-b$ on the number line. The minimum value of this sum occurs when $x$ is between $a$ and $-b$ (or at one of these points if $a=-b$), because in this "
+SFT,"Given the universal set $U=\{0, 1, 2, 3, 4\}$, $M=\{0, 1, 2\}$, and $N=\{2, 3\}$",B: \{3\},\{3\},False,"To solve the problem, we follow these steps closely aligned with the provided solution:
+
+1. **Find the Complement of $M$ in $U$:** The complement of $M$ in $U$, denoted as $C_U M$, consists of all elements in $U$ that are not in $M$. Given $U=\{0, 1, 2, 3, 4\}$ and $M=\{0, 1, 2\}$, we exclude the elements of $M$ from $U$ to get $C_U M = \{3, 4\}$.
+
+2. **Find the Intersection of $C_U M$ and $N$:** The intersection of two sets, denoted as $\cap$, includes all elements that are common to both sets."
+SFT,"Given that $a$, $b$, $c$ are all positive numbers, and ${a}^{\frac{3}{2}}+{b}^{\",\frac{a}{{b+c}} + \frac{b}{{a+c}} + \frac{c}{{a+b}} \leqslant \frac{1}{{2\sqrt{abc}}},\frac{a}{{b+c}}+\frac{b}{{a+c}}+\frac{c}{{a+b}}\leqslant \frac{1}{{2\sqrt{abc}}},False,"To solve the given problem, we will address each part separately.
+
+### Part (1): Prove $abc \leqslant \frac{1}{9}$
+
+Given that $a$, $b$, and $c$ are positive numbers and ${a}^{\frac{3}{2}}+{b}^{\frac{3}{2}}+{c}^{\frac{3}{2}}=1$, we aim to show that $abc \leqslant \frac{1}{9}$.
+
+First, let's apply the AM-GM inequality to the given expression:
+\[
+{a}^{\frac{3}{2}}+{b}^{\frac{3}{2}}+{c}^{\frac{3}{2}} \geqslant 3\sqrt[3]{{a}^{\frac{3}{2}}{b}^{\frac{3}{2}}{c}^{\frac{3}{2}}}
+\]
+This simplifies to:
+\[
+"
+SFT,"Given that the sequence $\{a_n\}$ is an arithmetic sequence, if $a_3 + a_{11} = ",3,3,True,"To solve for the common difference of the arithmetic sequence $\{a_n\}$, we start by using the properties of arithmetic sequences. 
+
+Given that $a_3 + a_{11} = 24$, we can express $a_{11}$ in terms of $a_3$ and the common difference $d$. Since $a_{11} = a_3 + 8d$, we have:
+\[a_3 + a_{11} = a_3 + (a_3 + 8d) = 24.\]
+This simplifies to:
+\[2a_3 + 8d = 24.\]
+Dividing both sides by 2 gives us:
+\[a_3 + 4d = 12.\]
+
+We also know that $a_4 = 3$. Since $a_4 = a_3 + d$, we can substitute $a_3$ from the prev"
+SFT,"Given the function $f(x)=|2x-1|$.
+(I) If the solution set of the inequality $f(x",4,4,True,"To solve the given problem, we will follow the steps outlined in the reference solution closely.
+
+### Part (I)
+
+Given the function $f(x) = |2x - 1|$, we need to find the value of $m$ such that the solution set of the inequality $f(x + \frac{1}{2}) \leqslant 2m - 1$ is $[-2, 2]$.
+
+First, let's rewrite the inequality with the given function:
+\[|2(x + \frac{1}{2}) - 1| \leqslant 2m - 1.\]
+
+Simplifying the expression inside the absolute value:
+\[|2x + 1 - 1| \leqslant 2m - 1,\]
+which simplifies furt"
+SFT,Given that $F\_1$ and $F\_2$ are the left and right foci of the hyperbola $\frac,e = \sqrt{2},A,False,"To solve this problem, we follow these steps closely aligned with the solution provided:
+
+1. **Identify the coordinates of $F\_1$ and $F\_2$:** The foci of the hyperbola are located at $(\pm c, 0)$, where $c = \sqrt{a^2 + b^2}$. Therefore, $F\_1 = (-c, 0)$ and $F\_2 = (c, 0)$.
+
+2. **Find the intersection point $P$:** Since the circle centered at the origin with radius $|OF\_1|$ intersects the hyperbola at point $P$ in the first quadrant, and knowing that $|OF\_1| = c$, we can deduce that $P$ lie"
+SFT,"There are 120 crayons in a box. One third of the crayons are new, 20% are broken",56,56,True,"Understand: We need to find the number of slightly used crayons out of the total 120 crayons in the box. The problem states that one third of the crayons are new, 20% are broken, and the rest are slightly used.
+
+Plan: First, calculate the number of new crayons and broken crayons. Then subtract these numbers from the total to find the number of slightly used crayons.
+
+Solve: 
+- New crayons: $\frac{1}{3} \times 120 = 40$ crayons.
+- Broken crayons: $20\% \times 120 = 0.2 \times 120 = 24$ crayons.
+-"
+SFT,A train that is 510 meters long is running at a certain speed. It takes 52 secon,45,45 \text{ km/h},True,"To solve this problem, we follow these steps closely aligned with the given solution:
+
+1. **Calculate the total distance covered by the train when it passes the bridge:** The train covers its own length plus the length of the bridge. Therefore, the total distance covered is $510$ meters (length of the train) + $140$ meters (length of the bridge) = $650$ meters.
+
+2. **Determine the time taken to cover this distance:** The problem states that the train takes $52$ seconds to pass the bridge.
+
+3. **"
+SFT,"Given the universal set $U=\{1,2,3,4,5,6,7\}$, set $A=\{3,4,5\}$, and set $B=\{1",A,\text{A},False,"To solve the problem, we follow these steps closely aligned with the provided solution:
+
+1. **Find the complement of set $B$ in the universal set $U$:**
+
+   The universal set $U$ is given as $U=\{1,2,3,4,5,6,7\}$. Set $B$ is given as $B=\{1,3,6\}$. To find the complement of $B$ in $U$, denoted as $\complement_{U}B$, we exclude the elements of $B$ from $U$. This gives us:
+   \[
+   \complement_{U}B = U - B = \{1,2,3,4,5,6,7\} - \{1,3,6\} = \{2,4,5,7\}.
+   \]
+
+2. **Find the intersection of set $A$ "
+SFT,"Theo, Mason, Roxy, Zara, and Lily are siblings. On weekdays, Theo drinks 8 cups ",296,296,True,"To calculate the total number of cups of water the siblings drink in one week, we need to consider both weekdays and weekends separately.
+
+**Weekdays:**
+- Theo drinks 8 cups per day, so for 5 weekdays, he drinks $8 \times 5 = 40$ cups.
+- Mason drinks 7 cups per day, so for 5 weekdays, he drinks $7 \times 5 = 35$ cups.
+- Roxy drinks 9 cups per day, so for 5 weekdays, she drinks $9 \times 5 = 45$ cups.
+- Zara drinks 10 cups per day, so for 5 weekdays, she drinks $10 \times 5 = 50$ cups.
+- Lily dri"
+SFT,Ten identical crates each of dimensions $3\mathrm{ft}\times 4\mathrm{ft}\times 6,190,40,False,"To solve this problem, we need to consider the possible orientations of each crate and how they contribute to the total height of the stack. Each crate can be oriented in one of three ways: with its $3\mathrm{ft}$ side up, its $4\mathrm{ft}$ side up, or its $6\mathrm{ft}$ side up. This gives us a total of $3^{10}$ possible arrangements for the ten crates.
+
+For the stack to be exactly $41\mathrm{ft}$ tall, we need to have a combination of these orientations that adds up to $41\mathrm{ft}$. We can"
+SFT,A badminton racket is marked up by 40% based on its cost price and then sold at ,125,125,True,"To solve this problem, let's denote the cost price of the badminton racket as $x$ yuan. 
+
+Given that the racket is marked up by 40% based on its cost price, the marked price can be calculated as:
+\[x + 0.4x = 1.4x\]
+
+Then, it is sold at 80% of the marked price, which gives us:
+\[1.4x \times 0.8 = 1.12x\]
+
+Since the sale still makes a profit of 15 yuan, we can set up the equation:
+\[1.12x - x = 15\]
+
+Solving for $x$, we get:
+\[0.12x = 15\]
+\[x = \frac{15}{0.12}\]
+\[x = 125\]
+
+Therefore, the cost "
+SFT,"Elective 4-4: Coordinate System and Parametric Equations
+
+In the Cartesian coord","\left(\frac{3}{2}, \frac{1}{2}\right)","\left(\frac{3}{2}, \frac{1}{2}\right)",True,"To solve the problem, we will follow the steps outlined in the reference solution, ensuring each step is detailed and clear.
+
+### Part (1): Standard Equation of $C_1$ and Cartesian Equation of $C_2$
+
+#### For $C_1$:
+Given the parametric equations:
+\[
+\begin{cases}
+x = \sqrt{3}\cos \alpha \\
+y = \sin \alpha
+\end{cases}
+\]
+We can eliminate the parameter $\alpha$ by squaring both equations and adding them together:
+\[
+x^2 = 3\cos^2 \alpha \quad \text{and} \quad y^2 = \sin^2 \alpha
+\]
+Adding these e"
+SFT,"Given that $f(x)=\frac{4^x-a}{2^x}$ is an odd number, $g(x)=(x-b)(x-2b)$, where ",b \geq \frac{3}{2},0 < b < 1 \text{ or } b \geq 1,False,"To solve the given problem, we will follow the steps outlined in the reference solution closely.
+
+### Part 1: Finding the Analytical Expression of $f(x)$
+
+Given that $f(x)$ is an odd function, we have $f(-x) = -f(x)$. Substituting $f(x) = \frac{4^x - a}{2^x}$ into this condition, we get:
+\[
+\frac{4^{-x} - a}{2^{-x}} = -\frac{4^x - a}{2^x}
+\]
+Simplifying both sides, we obtain:
+\[
+\frac{\frac{1}{4^x} - a}{\frac{1}{2^x}} = -\frac{4^x - a}{2^x}
+\]
+Multiplying both sides by $4^x \cdot 2^x$, we get:
+\"

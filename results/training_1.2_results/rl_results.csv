@@ -1,0 +1,595 @@
+model,problem_snippet,ground_truth,predicted,is_correct,full_output
+RL (GRPO),"Given the function $f(x)=|x+1|-|x-2|$.
+$(1)$ Find the solution set of the inequa","(-\infty, \dfrac {5}{4}]","(-\infty, -5]",False,"To solve the given problem, we need to analyze the function \( f(x) = |x+1| - |x-2| \) in different intervals determined by the points where the expressions inside the absolute values change sign, i.e., at \( x = -1 \) and \( x = 2 \).
+
+### Part 1: Solution Set of \( f(x) \geq 1 \)
+
+We will consider three cases based on the intervals determined by \( x = -1 \) and \( x = 2 \):
+
+#### Case 1: \( x < -1 \)
+In this interval, both \( x+1 \) and \( x-2 \) are negative, so:
+\[ f(x) = -(x+1) - (-(x-2)) "
+RL (GRPO),4 pints of a 5% antifreeze solution and 8 pints of a 20% antifreeze solution mus,15\%,15\%,True,"Understand: We need to mix 4 pints of a 5% antifreeze solution with 8 pints of a 20% antifreeze solution to get 12 pints of a certain percentage of antifreeze solution. We need to find that percentage.
+
+Plan: Use the concept of weighted averages to find the concentration of the resulting mixture. The total amount of pure antifreeze in the mixture will be the sum of the amounts from each solution, divided by the total volume of the mixture.
+
+Solve: 
+1. Calculate the amount of pure antifreeze in e"
+RL (GRPO),"what is the sum of 100 consecutive integers from - 49 inclusive , in a increasin",50,50,True,"Let's solve this step-by-step:
+
+### Understand
+We need to find the sum of 100 consecutive integers starting from -49 and going up to 50 (inclusive).
+
+### Plan
+To find the sum of these integers, we can use the formula for the sum of an arithmetic series:
+\[ S = \frac{n}{2} \times (a + l) \]
+where:
+- \( n \) is the number of terms,
+- \( a \) is the first term,
+- \( l \) is the last term.
+
+In this case:
+- \( n = 100 \),
+- \( a = -49 \),
+- \( l = 50 \).
+
+### Solve
+1. Substitute the values into the f"
+RL (GRPO),"The average math scores of classes A and B are $87$ and $82$ points, respectivel",B,B,False,"To determine Xiaoming's possible math score after moving from class A to class B, we need to analyze the conditions under which the average scores of both classes increase after his move. Let's denote the number of students in class A as \( n_A \) and the number of students in class B as \( n_B \). The total scores of the students in class A and class B before Xiaoming moves can be expressed as follows:
+
+- Total score of class A before the move: \( S_A = 87n_A \)
+- Total score of class B before "
+RL (GRPO),Billy worked for 3 straight hours on his homework questions. He solved 132 quest,3:1,3,True,"Let's denote the number of questions Billy solved in the first hour as \( x \), in the second hour as \( y \), and in the third hour as \( z \).
+
+From the problem, we know:
+1. \( z = 132 \)
+2. \( z = 2y \)
+3. The total number of questions solved over the three hours is 242.
+
+First, substitute \( z = 132 \) into the second equation to find \( y \):
+\[ 132 = 2y \]
+\[ y = \frac{132}{2} = 66 \]
+
+Next, we use the total number of questions solved to form an equation involving \( x \), \( y \), and \( "
+RL (GRPO),All the students of the class are told to sit in a circle shape. The boy at the ,70,70,True,"Understand: We need to determine the total number of boys in the class, given that the 10th boy is directly opposite the 45th boy in a circular arrangement.
+
+Plan: Since they are sitting in a circle and one boy is directly opposite another, the positions must be separated by half the total number of boys. Therefore, the difference between their positions should be equal to half the total number of boys.
+
+Let \( N \) be the total number of boys in the class. The 10th boy and the 45th boy are dire"
+RL (GRPO),"Let the function $f(x)=\sin (4x+ \frac {\pi}{4})$ where $x\in[0, \frac {9\pi}{16",B,D,False,"To solve the problem, we need to analyze the function \( f(x) = \sin(4x + \frac{\pi}{4}) \) and determine the conditions under which the function \( y = f(x) + a \) has exactly three zeros in the interval \( x \in [0, \frac{9\pi}{16}] \).
+
+### Step 1: Determine the period and key points of \( f(x) \)
+The function \( f(x) = \sin(4x + \frac{\pi}{4}) \) has a period of \( \frac{2\pi}{4} = \frac{\pi}{2} \). The key points within one period are:
+- \( x = 0 \): \( f(0) = \sin(\frac{\pi}{4}) = \frac{\s"
+RL (GRPO),"Given the set $M={x|y=\sqrt{-x^2+2x+8}}$ and the set $N={x|y=|x|+1}$, determine ",\text{A: } {x|-2 \leqslant x \leqslant 4},A,False,"To determine the intersection of sets \( M \) and \( N \), we need to first find the elements of each set individually and then find their common elements.
+
+**Step 1: Determine the set \( M \)**
+
+The set \( M \) is defined by the condition that the expression under the square root must be non-negative:
+\[ y = \sqrt{-x^2 + 2x + 8} \]
+This implies:
+\[ -x^2 + 2x + 8 \geq 0 \]
+
+We need to solve the quadratic inequality \( -x^2 + 2x + 8 \geq 0 \). First, we find the roots of the quadratic equation \("
+RL (GRPO),"While playing a game, Kaleb had 98 lives. After losing some lives, he had a cert",73,73,True,"Understand: The problem states that Kaleb started with 98 lives and lost 25 lives. We need to find out how many lives he has left.
+Plan: We will subtract the number of lives lost from the initial number of lives.
+Solve: 
+\[ \text{Remaining lives} = \text{Initial lives} - \text{Lives lost} \]
+\[ \text{Remaining lives} = 98 - 25 \]
+\[ \text{Remaining lives} = 73 \]
+Verify: To check, we can add the lives lost back to the remaining lives to see if we get the original number of lives.
+\[ 73 + 25 = 98"
+RL (GRPO),"Consider a sequence $\{a_n\}$ defined as follows: 1, -2, -2, 3, 3, 3, -4, -4, -4",31^2 + 47 = 1008,1953,False,"To solve the problem, we need to understand the sequence \( \{a_n\} \) and the sum \( S_n \). The sequence \( \{a_n\} \) is defined such that for each positive integer \( k \), the term \( a_n = (-1)^{k-1}k \) appears \( k \) times, starting from the position \( \frac{(k-1)k}{2} + 1 \) to \( \frac{k(k+1)}{2} \).
+
+### Step 1: Determine the sequence \( \{a_n\} \) up to \( n = 11 \)
+The sequence starts as follows:
+- \( a_1 = 1 \)
+- \( a_2 = -2 \), \( a_3 = -2 \)
+- \( a_4 = 3 \), \( a_5 = 3 \), \( a"
+RL (GRPO),Aston has accidentally torn apart his comics and needs to put all the pages back,11,11,True,"Understand: We need to determine the total number of comics in the box after Aston reassembles as many as possible from the torn pages he found.
+
+Plan: 
+1. Calculate the number of complete comics that can be made from the 150 pages.
+2. Add these to the existing comics in the box.
+
+Solve:
+1. Each comic consists of 25 pages. To find out how many complete comics can be made from 150 pages, we divide the total number of pages by the number of pages per comic:
+   \[
+   \text{Number of complete comics"
+RL (GRPO),"In Mary's class, there are 35 students. Their teacher told them they could pay $",\$1397.50,1407.50,False,"Understand: We need to calculate the total amount gathered by the class, considering the different payment amounts and discounts, as well as the administrative fee.
+
+Plan: 
+1. Calculate the total amount from the 20 students who paid the full amount.
+2. Calculate the total amount from the 5 students with a 25% discount.
+3. Calculate the total amount from the 7 students who paid half the amount.
+4. Calculate the total amount from the 3 students with a 10% discount.
+5. Add these amounts together an"
+RL (GRPO),The point corresponding to the complex number $\dfrac{i^{2014}}{1 + i}(i)$ in th,B,\text{B},False,"To determine the location of the point corresponding to the complex number \(\dfrac{i^{2014}}{1 + i}\) in the complex plane, we need to simplify the expression step by step.
+
+First, let's simplify \(i^{2014}\). We know that the powers of \(i\) cycle every 4 terms: \(i^1 = i\), \(i^2 = -1\), \(i^3 = -i\), \(i^4 = 1\), and so on. Therefore, we can reduce the exponent modulo 4:
+\[2014 \mod 4 = 2.\]
+So, \(i^{2014} = i^2 = -1\).
+
+Now, substitute this back into the original expression:
+\[\dfrac{i^{201"
+RL (GRPO),A bullet train 240 m long is running with a speed of 100 kmph. In what time will,8,8,True,"Understand: We need to find the time taken for the bullet train to pass a man running in the opposite direction. The relative speed of the train with respect to the man needs to be calculated first.
+
+Plan: 
+1. Convert the speeds from km/h to m/s.
+2. Calculate the relative speed of the train with respect to the man.
+3. Use the formula \( \text{Time} = \frac{\text{Distance}}{\text{Speed}} \).
+
+Solve:
+1. Convert speeds:
+   - Speed of the train: \( 100 \, \text{km/h} = 100 \times \frac{1000}{3600} ="
+RL (GRPO),A train is travelling at a certain speed and crosses a pole in 5 seconds. The le,90.0072,90.01,False,"Let's solve this step-by-step:
+
+1. **Understand**: We need to find the speed of the train in kilometers per hour (km/h) given that it crosses a pole in 5 seconds and its length is 125.01 meters.
+
+2. **Plan**: 
+   - First, we'll calculate the speed of the train in meters per second (m/s).
+   - Then, we'll convert this speed to kilometers per hour (km/h).
+
+3. **Solve**:
+   - The train crosses a pole in 5 seconds, which means it covers its own length in that time.
+   - Distance covered = Length of "
+RL (GRPO),"Given the planar vectors $\vec{a}=(2,4)$, $\vec{b}=(-1,k)$, and $\vec{a} \parall","(3,6)","(3, 6)",False,"To solve the problem, we need to follow these steps:
+
+1. Determine the value of \( k \) such that the vectors \(\vec{a}\) and \(\vec{b}\) are parallel.
+2. Use the value of \( k \) to find the vector \(2\vec{a} + \vec{b}\).
+
+### Step 1: Determine the value of \( k \)
+
+Two vectors \(\vec{a} = (a_1, a_2)\) and \(\vec{b} = (b_1, b_2)\) are parallel if there exists a scalar \(\lambda\) such that \(\vec{b} = \lambda \vec{a}\). This implies that the components of \(\vec{b}\) are proportional to the com"
+RL (GRPO),The distance from the center of the circle \\({{x}^{2}}+{{y}^{2}}-2x-8y+13=0\\) ,\text{A},A,False,"To solve the problem, we need to follow these steps:
+
+1. Determine the center and radius of the circle.
+2. Use the distance formula to find the distance from the center of the circle to the given line.
+3. Set up the equation based on the given distance and solve for \(a\).
+
+### Step 1: Determine the center and radius of the circle
+
+The given equation of the circle is:
+\[ x^2 + y^2 - 2x - 8y + 13 = 0 \]
+
+We need to rewrite this equation in the standard form \((x-h)^2 + (y-k)^2 = r^2\) by completi"
+RL (GRPO),Lily got a new puppy for her birthday.  She was responsible for feeding the pupp,25,25,True,"Understand: The problem asks for the total amount of food the puppy will consume over the next 4 weeks, including today's feeding.
+
+Plan: We need to calculate the total food consumption in two parts: 
+1. The first 2 weeks (starting tomorrow), where the puppy eats 1/4 cup of food three times a day.
+2. The next 2 weeks, where the puppy eats 1/2 cup of food twice a day.
+We also need to include today's feeding, which is 1/2 cup.
+
+Solve: 
+
+1. **First 2 weeks (starting tomorrow)**:
+   - Number of days"
+RL (GRPO),The graph of the function $y= \sqrt{3}\cos x + \sin x$ ($x \in \mathbb{R}$) is s,A,A,False,"To solve the problem, we start by rewriting the given function \( y = \sqrt{3} \cos x + \sin x \) in a more convenient form. We can express it as a single cosine function with a phase shift. To do this, we use the identity for combining trigonometric functions:
+
+\[ y = R \cos(x - \phi) \]
+
+where \( R \) is the amplitude and \( \phi \) is the phase shift. The amplitude \( R \) is given by:
+
+\[ R = \sqrt{(\sqrt{3})^2 + 1^2} = \sqrt{3 + 1} = 2 \]
+
+Next, we need to find the angle \( \phi \) such tha"
+RL (GRPO),Determine the binomial term with the largest coefficient in the expansion of the,7\text{th},-252x^5,False,"To determine the binomial term with the largest coefficient in the expansion of \((1-x)^{10}\), we start by writing out the general term in the binomial expansion. The binomial theorem states that:
+
+\[
+(1-x)^{10} = \sum_{k=0}^{10} \binom{10}{k} (1)^{10-k} (-x)^k = \sum_{k=0}^{10} \binom{10}{k} (-1)^k x^k
+\]
+
+The coefficient of the \(k\)-th term is \(\binom{10}{k} (-1)^k\). Since \(\binom{10}{k}\) is always positive, the sign of the coefficient depends on \((-1)^k\). Therefore, the coefficient of"
+RL (GRPO),"Given that $α$ is an angle in the third quadrant, $f(α)= \frac{\sin (π-α)·\cos (",\frac{1}{2},\frac{1}{2},True,"To solve the given problem, we will follow the steps outlined in the reference solution and provide detailed explanations for each part.
+
+### Part 1: Simplify \( f(\alpha) \)
+
+Given:
+\[ f(\alpha) = \frac{\sin (\pi - \alpha) \cdot \cos (2\pi - \alpha) \cdot \tan (-\alpha - \pi)}{\tan (-\alpha) \cdot \sin (-\pi - \alpha)} \]
+
+We will simplify each trigonometric function step by step.
+
+1. **Simplify \(\sin (\pi - \alpha)\):**
+   \[ \sin (\pi - \alpha) = \sin \alpha \]
+
+2. **Simplify \(\cos (2\pi - "
+RL (GRPO),You have 2 chances to draw from the basket. How many ways exist to draw a fruit ,20,20,True,"To determine the number of ways to draw a fruit from a basket containing 1 apple, 1 peach, 1 pear, 1 melon, and 1 strawberry while considering the order of draw over two attempts, we can break down the problem into steps.
+
+First, let's identify the total number of fruits in the basket. There are 5 different fruits: apple, peach, pear, melon, and strawberry.
+
+For the first draw, there are 5 possible choices since any one of the 5 fruits can be drawn. After drawing the first fruit, there are 4 fru"
+RL (GRPO),"15 years hence , rohan will be just 4 times as old as he was 15 years ago . how ",25,25,True,"Let's solve this step-by-step.
+
+### Understand
+We need to find Rohan's current age. We know that in 15 years, Rohan will be 4 times as old as he was 15 years ago.
+
+### Plan
+Let \( x \) be Rohan's current age. 
+- Rohan's age 15 years ago: \( x - 15 \)
+- Rohan's age 15 years from now: \( x + 15 \)
+
+According to the problem, in 15 years, his age will be 4 times his age 15 years ago. So we can set up the equation:
+\[ x + 15 = 4(x - 15) \]
+
+### Solve
+1. Expand and simplify the equation:
+   \[
+   x + "
+RL (GRPO),Arnold's collagen powder has 18 grams of protein for every 2 scoops.  His protei,86,86,True,"Understand: The problem asks for the total grams of protein Arnold consumes from collagen powder, protein powder, and steak.
+
+Plan: We need to calculate the protein content from each source and then sum them up.
+
+Solve: 
+
+1. **Collagen Powder**:
+   - Given: 18 grams of protein for every 2 scoops.
+   - For 1 scoop, the protein content would be half of that:
+     \[
+     \text{Protein from 1 scoop of collagen powder} = \frac{18}{2} = 9 \text{ grams}
+     \]
+
+2. **Protein Powder**:
+   - Given: 21 g"
+RL (GRPO),"If $\cos\left(\frac{\pi}{8}-\alpha\right) = \frac{1}{6}$, then the value of $\co",\dfrac{17}{18},A,False,"To solve the problem, we start with the given information: \(\cos\left(\frac{\pi}{8} - \alpha\right) = \frac{1}{6}\). We need to find the value of \(\cos\left(\frac{3\pi}{4} + 2\alpha\right)\).
+
+First, let's use the angle addition formula for cosine. Notice that \(\frac{3\pi}{4} + 2\alpha\) can be rewritten in terms of \(\frac{\pi}{8} - \alpha\):
+
+\[
+\frac{3\pi}{4} + 2\alpha = \pi - \left(\frac{\pi}{4} - 2\alpha\right) = \pi - \left(\frac{\pi}{4} - 2\alpha\right)
+\]
+
+Using the identity \(\cos(\p"
+RL (GRPO),What is the largest multiple of 10 for which the average (arithmetic mean) of al,\(10n,400,False,"To solve the problem, we need to find the largest multiple of 10 such that the average of all multiples of 10 from 10 to that number inclusive is 205. Let's denote this number by \( N \).
+
+First, let's identify the sequence of multiples of 10 from 10 to \( N \). This sequence is an arithmetic sequence with the first term \( a = 10 \) and common difference \( d = 10 \). The general form of the \( k \)-th term in this sequence is given by:
+\[ a_k = 10k \]
+where \( k \) ranges from 1 to \( \frac{N}"
+RL (GRPO),"Given the sets $M=\{x|x= \frac {k}{2}+ \frac {1}{4},k\in\mathbb{Z}\}$ and $N=\{x",B,\text{D},False,"To determine the relationship between the sets \(M\) and \(N\), we need to analyze the elements of each set in detail.
+
+First, let's express the elements of set \(M\):
+\[ M = \left\{ x \mid x = \frac{k}{2} + \frac{1}{4}, k \in \mathbb{Z} \right\} \]
+We can rewrite \(x\) as:
+\[ x = \frac{2k + 1}{4} \]
+This shows that \(x\) is of the form \(\frac{2k + 1}{4}\), where \(2k + 1\) is an odd integer. Therefore, \(x\) is a fraction with a numerator that is an odd integer and a denominator of 4.
+
+Next, l"
+RL (GRPO),"In the Cartesian coordinate system, there is a point $P$ in the second quadrant.","\text{A: }(-5,4)",A,False,"To determine the coordinates of point \( P \) in the second quadrant, we need to consider the properties of the second quadrant and the given distances from the axes.
+
+1. **Identify the Quadrant**: The second quadrant is where the \( x \)-coordinate is negative and the \( y \)-coordinate is positive.
+2. **Distance from the Axes**: The distance from point \( P \) to the \( x \)-axis is 4, which means the \( y \)-coordinate of \( P \) is 4 (since it is in the second quadrant, the \( y \)-coordinat"
+RL (GRPO),"If $m$ is a root of the equation $x^{2}-6x-5=0$, then the value of the algebraic",6,6,True,"To solve the problem, we start by understanding that \( m \) is a root of the quadratic equation \( x^2 - 6x - 5 = 0 \). This means that when \( x = m \), the equation holds true. Therefore, we can substitute \( m \) into the equation:
+
+\[ m^2 - 6m - 5 = 0 \]
+
+From this equation, we can isolate \( m^2 - 6m \):
+
+\[ m^2 - 6m = 5 \]
+
+Next, we need to find the value of the expression \( 11 + 6m - m^2 \). We can rewrite this expression in a form that allows us to use the result from above:
+
+\[ 11 + 6"
+RL (GRPO),The deployment of China's Beidou satellite navigation system has been completed.,2.15 \times 10^{7},2.15 \times 10^7,False,"To express the number \(21500000\) in scientific notation, we need to follow these steps:
+
+1. **Identify the significant digits**: The number \(21500000\) has the significant digits \(215\).
+
+2. **Move the decimal point**: We need to move the decimal point in \(21500000\) so that it becomes a number between \(1\) and \(10\). To do this, we move the decimal point from the end of the number to just after the first digit:
+   \[
+   21500000 \rightarrow 2.15
+   \]
+   This requires moving the decimal "
+RL (GRPO),"A and B participate in a shooting game. According to the rules, hitting the targ",\text{D},D,False,"To solve the problem, we need to determine the probability \( p \) that B hits the target, given the conditions of the shooting game. Let's break down the problem step by step.
+
+1. **Identify the possible outcomes and their probabilities:**
+   - The probability that A hits the target is \( \frac{3}{5} \).
+   - The probability that A misses the target is \( 1 - \frac{3}{5} = \frac{2}{5} \).
+   - The probability that B hits the target is \( p \).
+   - The probability that B misses the target is \("
+RL (GRPO),"Among the following groups of vectors, the one that can represent the vector $\o",\text{B},B,False,"To determine which group of vectors can represent the vector \(\overrightarrow{a} = (3, -2)\), we need to check if \(\overrightarrow{a}\) can be expressed as a linear combination of the vectors in each group. That is, we need to find scalars \(x\) and \(y\) such that \(\overrightarrow{a} = x \overrightarrow{e_1} + y \overrightarrow{e_2}\).
+
+Let's check each option:
+
+**Option A: \(\overrightarrow{e_1} = (0, 0)\), \(\overrightarrow{e_2} = (1, 2)\)**
+
+If \(\overrightarrow{a} = x \overrightarrow{e_1"
+RL (GRPO),"In a community of 120 families, 25 families own 4 dogs and 2 cats, 30 families o",5,"230 \text{ dogs}, 265 \text{ cats}, 90 \text{ birds}, 180 \text{ fish}, 5 \text{ horses}",True,"To determine the total number of each type of pet in the community, we will break down the problem into smaller parts and calculate the number of each type of pet owned by the different groups of families.
+
+1. **Calculate the number of dogs:**
+   - 25 families own 4 dogs each: \(25 \times 4 = 100\) dogs.
+   - 30 families own 3 dogs each: \(30 \times 3 = 90\) dogs.
+   - 20 families own 2 dogs each: \(20 \times 2 = 40\) dogs.
+   - The remaining families own 3 cats and 4 fish each. First, we need t"
+RL (GRPO),"$(1)$ Calculate: $\sqrt{9}-\sqrt[3]{8}+\sqrt{0.01}$.  
+$(2)$ Solve the system of",1.1,"(2, -1)",False,"Let's solve the given problems step by step.
+
+### Problem 1: Calculate \(\sqrt{9} - \sqrt[3]{8} + \sqrt{0.01}\)
+
+1. **Calculate \(\sqrt{9}\):**
+   \[
+   \sqrt{9} = 3
+   \]
+
+2. **Calculate \(\sqrt[3]{8}\):**
+   \[
+   \sqrt[3]{8} = 2
+   \]
+
+3. **Calculate \(\sqrt{0.01}\):**
+   \[
+   \sqrt{0.01} = \sqrt{0.1^2} = 0.1
+   \]
+
+4. **Combine the results:**
+   \[
+   \sqrt{9} - \sqrt[3]{8} + \sqrt{0.01} = 3 - 2 + 0.1 = 1.1
+   \]
+
+Thus, the final answer for the first part is:
+\[
+\boxed{1.1}
+\]
+
+### Problem "
+RL (GRPO),Two trains are moving in the same direction at 144 kmph and 72 kmph. The faster ,380,380,True,"**Understand**: We need to find the length of the faster train, given that it crosses a man in the slower train in 19 seconds. The speeds of the trains are given in km/h, and we need to convert them to m/s for consistency in units.
+
+**Plan**: 
+1. Convert the speeds of both trains from km/h to m/s.
+2. Calculate the relative speed of the faster train with respect to the slower train.
+3. Use the formula for distance (length of the faster train) = relative speed × time taken to cross.
+
+**Solve**:
+1."
+RL (GRPO),Write down the equation of a circle that is tangent to the circle $x^{2}+y^{2}=1,(x+2\sqrt{3}+3)^{2}+(y-2-\sqrt{3})^{2}=21+12\sqrt{3},(x - 1)^2 + (y - \sqrt{3})^2 = 1,False,"To find the equation of a circle that is tangent to the circle \(x^2 + y^2 = 1\) externally, and tangent to the line \(y = \frac{\sqrt{3}}{3}x\) and the \(y\)-axis, we will follow these steps:
+
+1. **Identify the center and radius of the given circle:**
+   The given circle is \(x^2 + y^2 = 1\), which has center \((0, 0)\) and radius \(1\).
+
+2. **Determine the general form of the circle's equation:**
+   Let the center of the required circle be \((a, b)\) and its radius be \(r\). The equation of th"
+RL (GRPO),"Given that the line $y=kx$ is a tangent to the function $y=\ln x$, find the valu",\dfrac{1}{e},\frac{1}{e},False,"To determine the value of \( k \) such that the line \( y = kx \) is tangent to the curve \( y = \ln x \), we need to follow these steps:
+
+1. **Find the slope of the tangent line to \( y = \ln x \) at a point \( (a, \ln a) \)**:
+   The slope of the tangent line to the curve \( y = \ln x \) at any point \( x = a \) is given by the derivative of \( \ln x \) evaluated at \( x = a \). The derivative of \( \ln x \) is \( \frac{1}{x} \), so the slope at \( x = a \) is \( \frac{1}{a} \).
+
+2. **Set the "
+RL (GRPO),"A line passing through the focus $F$ of the parabola $C: y^2 = 2px (p > 0)$, wit",C,B,False,"To solve the problem, we need to follow these steps:
+
+1. Identify the coordinates of the focus \( F \) and the directrix \( l \) of the parabola \( C: y^2 = 2px \).
+2. Determine the coordinates of the point \( M \) where the line through \( F \) with slope \( \sqrt{3} \) intersects the parabola.
+3. Find the coordinates of point \( N \) on the directrix such that \( MN \perp l \).
+4. Calculate the perimeter of \( \triangle MNF \) and use it to find the coordinates of \( M \).
+5. Calculate the are"
+RL (GRPO),"Given a sequence ${a_n}$ with the sum of its first $n$ terms denoted as $S_n$, i",768,768,True,"To find the value of \(a_6\) in the sequence \(\{a_n\}\), we start by understanding the relationship between the terms and the sums of the sequence. We know that \(a_1 = 1\) and \(a_{n+1} = 3S_n\) for all positive integers \(n\).
+
+First, let's express \(S_n\) in terms of the sequence elements:
+\[ S_n = a_1 + a_2 + a_3 + \cdots + a_n. \]
+
+From the given relation \(a_{n+1} = 3S_n\), we can write:
+\[ a_2 = 3S_1 = 3a_1 = 3 \cdot 1 = 3. \]
+\[ S_2 = a_1 + a_2 = 1 + 3 = 4. \]
+\[ a_3 = 3S_2 = 3 \cdot 4 "
+RL (GRPO),A baker is making bread according to a recipe that requires him to use 3 eggs fo,6,6,True,"Understand: We need to determine how many cups of flour the baker has left based on the ratio of eggs to flour and the number of eggs required.
+
+Plan: Use the given ratio to set up a proportion and solve for the unknown quantity of flour.
+
+Solve: 
+1. The ratio of eggs to flour is 3 eggs : 2 cups of flour.
+2. The baker needs 9 eggs to use up all the flour he has.
+3. Set up the proportion: \(\frac{3 \text{ eggs}}{2 \text{ cups of flour}} = \frac{9 \text{ eggs}}{x \text{ cups of flour}}\).
+
+To find"
+RL (GRPO),"two cars start from the opposite places of a main road , 150 km apart . first ca",65,76.6,False,"Let's solve this step-by-step according to the given instructions.
+
+### Understand
+We have two cars starting from opposite ends of a 150 km road. The first car makes several turns, while the second car travels only 35 km along the main road due to a breakdown.
+
+### Plan
+1. Calculate the position of the first car after its movements.
+2. Determine the position of the second car.
+3. Calculate the distance between the two cars.
+
+### Solve
+
+#### First Car Movements
+- Starts at one end of the 150 km r"
+RL (GRPO),Calculate:<br/>$(1) a^{6} \div a^{2}$;<br/>$(2) m^{2} \cdot m^{4} - (2m^{3})^{2},-3m^{6},-3m^6,True,"To solve the given expressions, we will follow the steps for each part separately.
+
+### Part 1: \( a^6 \div a^2 \)
+
+We start with the expression \( a^6 \div a^2 \).
+
+Using the properties of exponents, specifically the rule that states \( \frac{a^m}{a^n} = a^{m-n} \), we can simplify the expression as follows:
+
+\[
+a^6 \div a^2 = a^{6-2} = a^4
+\]
+
+So, the answer to the first part is:
+
+\[
+\boxed{a^4}
+\]
+
+### Part 2: \( m^2 \cdot m^4 - (2m^3)^2 \)
+
+Next, we need to simplify the expression \( m^2 \cd"
+RL (GRPO),"A pet store had eighty-five gerbils. If they sold sixty-nine of them, how many w",16,16,True,"Understand: The problem asks for the number of gerbils remaining after some were sold.
+Plan: We need to subtract the number of gerbils sold from the original number of gerbils.
+Solve: 
+Original number of gerbils = 85
+Number of gerbils sold = 69
+
+Remaining gerbils = Original number of gerbils - Number of gerbils sold
+\[ \text{Remaining gerbils} = 85 - 69 \]
+\[ \text{Remaining gerbils} = 16 \]
+
+Verify: Check that the subtraction is correct and logical. 85 - 69 = 16, which makes sense as it's a rea"
+RL (GRPO),"In a renowned city, the average birth rate is some people every two seconds and ",4,2,False,"Let's break down the problem step-by-step according to the given process.
+
+### Understand
+We need to find the average birth rate in the city. We know the death rate and the net increase in population over one day.
+
+### Plan
+To find the average birth rate, we can set up an equation based on the given information. Let \( B \) be the average birth rate in people per second. The death rate is given as 2 people every two seconds, which translates to 1 person per second. The net increase in population"
+RL (GRPO),"A supermarket sells a certain product with a profit of $50$ dollars per item, an",2200,\text{No},False,"To solve the problem, we need to establish the relationship between the price reduction, the sales volume, and the profit. Let's denote the price reduction by \( x \) dollars. The original profit per item is $50$, and the original sales volume is 30 items per day. For each $1$ dollar reduction in price, the sales volume increases by 2 items per day.
+
+### Part (1)
+When the price is reduced by \( x \) dollars, the new sales volume is \( 30 + 2x \) items per day. The new profit per item is \( 50 - "
+RL (GRPO),"Given the inequality $|x-a|+|x+b| \geqslant 3$, the solution set is $\mathbb{R}$","(-\infty,-3) \cup (3,+\infty)","[3, \infty)",False,"To solve the inequality \( |x-a| + |x+b| \geq 3 \) and determine the range of values for \( a+b \) such that the solution set is \(\mathbb{R}\), we need to analyze the expression \( |x-a| + |x+b| \).
+
+### Step-by-Step Solution:
+
+1. **Understanding the Absolute Value Expression:**
+   The expression \( |x-a| + |x+b| \) represents the sum of the distances from \( x \) to \( a \) and from \( x \) to \( -b \) on the real number line.
+
+2. **Critical Points:**
+   The critical points where the behavior "
+RL (GRPO),"Given the universal set $U=\{0, 1, 2, 3, 4\}$, $M=\{0, 1, 2\}$, and $N=\{2, 3\}$",B: \{3\},B,False,"To solve the problem, we need to follow these steps:
+
+1. Determine the complement of \(M\) in \(U\), denoted as \(C_U M\).
+2. Find the intersection of \(C_U M\) and \(N\).
+
+Let's start with the first step. The complement of \(M\) in \(U\) is the set of all elements in \(U\) that are not in \(M\). The universal set \(U\) is \(\{0, 1, 2, 3, 4\}\) and the set \(M\) is \(\{0, 1, 2\}\). Therefore, the complement of \(M\) in \(U\) is:
+\[ C_U M = U - M = \{3, 4\} \]
+
+Next, we need to find the intersect"
+RL (GRPO),"Given that $a$, $b$, $c$ are all positive numbers, and ${a}^{\frac{3}{2}}+{b}^{\",\frac{a}{{b+c}} + \frac{b}{{a+c}} + \frac{c}{{a+b}} \leqslant \frac{1}{{2\sqrt{abc}}},\frac{a}{b+c} + \frac{b}{a+c} + \frac{c}{a+b} \leq \frac{1}{2\sqrt{abc}},False,"To solve the given problem, we will address each part step-by-step.
+
+### Part (1): Prove \( abc \leq \frac{1}{9} \)
+
+Given:
+\[ a^{\frac{3}{2}} + b^{\frac{3}{2}} + c^{\frac{3}{2}} = 1 \]
+
+We will use the AM-GM inequality to prove this. The AM-GM inequality states that for any non-negative real numbers \( x_1, x_2, \ldots, x_n \):
+\[ \frac{x_1 + x_2 + \cdots + x_n}{n} \geq \sqrt[n]{x_1 x_2 \cdots x_n} \]
+
+Applying AM-GM to \( a^{\frac{3}{2}}, b^{\frac{3}{2}}, c^{\frac{3}{2}} \):
+\[ \frac{a^{\frac{"
+RL (GRPO),"Given that the sequence $\{a_n\}$ is an arithmetic sequence, if $a_3 + a_{11} = ",3,3,True,"To solve for the common difference of the arithmetic sequence \(\{a_n\}\), we start by using the properties of arithmetic sequences. The general form of the \(n\)-th term of an arithmetic sequence is given by:
+
+\[a_n = a_1 + (n-1)d\]
+
+where \(a_1\) is the first term and \(d\) is the common difference.
+
+We are given two pieces of information:
+1. \(a_3 + a_{11} = 24\)
+2. \(a_4 = 3\)
+
+First, let's express \(a_3\), \(a_{11}\), and \(a_4\) in terms of \(a_1\) and \(d\):
+
+\[a_3 = a_1 + 2d\]
+\[a_{11} ="
+RL (GRPO),"Given the function $f(x)=|2x-1|$.
+(I) If the solution set of the inequality $f(x",4,4,True,"To solve the given problem, we will address each part step-by-step.
+
+### Part (I)
+
+We start with the function \( f(x) = |2x - 1| \). The inequality in question is \( f\left(x + \frac{1}{2}\right) \leq 2m - 1 \).
+
+First, substitute \( x + \frac{1}{2} \) into \( f(x) \):
+\[ f\left(x + \frac{1}{2}\right) = \left|2\left(x + \frac{1}{2}\right) - 1\right| = |2x + 1 - 1| = |2x|. \]
+
+So the inequality becomes:
+\[ |2x| \leq 2m - 1. \]
+This can be rewritten as:
+\[ - (2m - 1) \leq 2x \leq 2m - 1. \]
+Dividi"
+RL (GRPO),Given that $F\_1$ and $F\_2$ are the left and right foci of the hyperbola $\frac,e = \sqrt{2},A,False,"To solve the problem, we need to follow these steps:
+
+1. Identify the coordinates of the foci \( F_1 \) and \( F_2 \).
+2. Determine the coordinates of the point \( P \) where the circle intersects the hyperbola.
+3. Use the area of triangle \( PF_1F_2 \) to find the relationship between \( a \) and \( b \).
+4. Calculate the eccentricity of the hyperbola.
+
+### Step 1: Identify the coordinates of the foci
+The foci of the hyperbola \(\frac{x^2}{a^2} - \frac{y^2}{b^2} = 1\) are located at \( F_1 = (-"
+RL (GRPO),"There are 120 crayons in a box. One third of the crayons are new, 20% are broken",56,56,True,"Understand: We need to find the number of slightly used crayons out of a total of 120 crayons, given that one third are new and 20% are broken.
+
+Plan: 
+1. Calculate the number of new crayons.
+2. Calculate the number of broken crayons.
+3. Subtract the number of new and broken crayons from the total to find the number of slightly used crayons.
+
+Solve:
+1. Number of new crayons = \(\frac{1}{3} \times 120 = 40\).
+2. Number of broken crayons = \(20\% \times 120 = 0.20 \times 120 = 24\).
+3. Number of s"
+RL (GRPO),A train that is 510 meters long is running at a certain speed. It takes 52 secon,45,45,True,"**Understand**: We need to find the speed of the train in kilometers per hour. The total distance covered by the train when it passes the bridge is the length of the train plus the length of the bridge. The time taken to cover this distance is given, and we can use this to find the speed.
+
+**Plan**: 
+1. Calculate the total distance covered by the train.
+2. Use the formula for speed: \( \text{Speed} = \frac{\text{Distance}}{\text{Time}} \).
+3. Convert the speed from meters per second to kilometer"
+RL (GRPO),"Given the universal set $U=\{1,2,3,4,5,6,7\}$, set $A=\{3,4,5\}$, and set $B=\{1",A,A,False,"To solve the problem, we need to follow these steps:
+
+1. Determine the complement of set \( B \) with respect to the universal set \( U \).
+2. Find the intersection of set \( A \) with the complement of set \( B \).
+
+Let's start with the first step. The complement of set \( B \) with respect to the universal set \( U \), denoted as \( \complement_{U}B \), is the set of all elements in \( U \) that are not in \( B \).
+
+The universal set \( U \) is:
+\[ U = \{1, 2, 3, 4, 5, 6, 7\} \]
+
+The set \( B "
+RL (GRPO),"Theo, Mason, Roxy, Zara, and Lily are siblings. On weekdays, Theo drinks 8 cups ",296,296,True,"Understand: We need to calculate the total number of cups of water consumed by each sibling in a week and then sum these totals.
+
+Plan: 
+1. Calculate the weekly consumption for each day of the week (5 weekdays and 2 weekend days).
+2. Sum the weekday and weekend consumptions for each sibling.
+3. Add up the totals for all siblings.
+
+Solve: 
+
+For each sibling, we will calculate their total weekly consumption as follows:
+
+- **Theo**:
+  - Weekdays: \(8 \text{ cups/day} \times 5 \text{ days} = 40 \tex"
+RL (GRPO),Ten identical crates each of dimensions $3\mathrm{ft}\times 4\mathrm{ft}\times 6,190,190,True,"To determine the probability that the stack of ten crates is exactly \(41\) feet tall, we need to consider the possible orientations of each crate. Each crate can be oriented in one of three ways: with its \(3 \times 4\) face, \(3 \times 6\) face, or \(4 \times 6\) face on the bottom. The heights of these orientations are \(3\) feet, \(4\) feet, and \(6\) feet, respectively.
+
+We need to find the number of ways to arrange the heights of the ten crates such that their total height is \(41\) feet. "
+RL (GRPO),A badminton racket is marked up by 40% based on its cost price and then sold at ,125,125,True,"To determine the cost price of the badminton racket, let's denote the cost price by \( C \).
+
+1. **Calculate the marked price:**
+   The marked price is the cost price plus a 40% markup.
+   \[
+   \text{Marked Price} = C + 0.4C = 1.4C
+   \]
+
+2. **Calculate the selling price:**
+   The selling price is 80% of the marked price.
+   \[
+   \text{Selling Price} = 0.8 \times 1.4C = 1.12C
+   \]
+
+3. **Determine the profit:**
+   The profit is the difference between the selling price and the cost price.
+   \["
+RL (GRPO),"Elective 4-4: Coordinate System and Parametric Equations
+
+In the Cartesian coord","\left(\frac{3}{2}, \frac{1}{2}\right)","\left( \frac{3}{2}, \frac{1}{2} \right)",True,"To solve the problem, we will follow the steps outlined in the reference solution.
+
+### Step 1: Convert the parametric equations of \( C_1 \) to Cartesian form
+
+Given the parametric equations of \( C_1 \):
+\[
+\begin{cases}
+x = \sqrt{3} \cos \alpha \\
+y = \sin \alpha
+\end{cases}
+\]
+
+We know that \(\cos^2 \alpha + \sin^2 \alpha = 1\). Therefore, we can express \( \cos \alpha \) and \( \sin \alpha \) in terms of \( x \) and \( y \):
+\[
+\cos \alpha = \frac{x}{\sqrt{3}}, \quad \sin \alpha = y
+\]
+
+Sub"
+RL (GRPO),"Given that $f(x)=\frac{4^x-a}{2^x}$ is an odd number, $g(x)=(x-b)(x-2b)$, where ",b \geq \frac{3}{2},"\left( \frac{1}{2}, 1 \right]",False,"To solve the given problem, we will address each part step-by-step.
+
+### Part 1: Find the analytical expression of \( f(x) \)
+
+Given that \( f(x) = \frac{4^x - a}{2^x} \) is an odd function, we need to determine the value of \( a \).
+
+Since \( f(x) \) is odd, we have \( f(-x) = -f(x) \). Therefore,
+\[ f(-x) = \frac{4^{-x} - a}{2^{-x}} = \frac{\frac{1}{4^x} - a}{\frac{1}{2^x}} = \frac{1 - a \cdot 4^x}{2^x} = -f(x) = -\frac{4^x - a}{2^x}. \]
+This implies
+\[ \frac{1 - a \cdot 4^x}{2^x} = -\frac{4^x"

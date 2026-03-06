@@ -184,7 +184,7 @@ evaluation:
     The answer is \boxed{\dfrac{1}{6}}.
 
     Now solve:
-  batch_size: 4  # Increase to 8-16 on A100 (40GB) for faster eval
+  batch_size: 16  # Increase to 8-16 on A100 (40GB) for faster eval
 
 # --- Inference ---
 inference:

@@ -163,27 +163,52 @@ rewards:
 # --- Evaluation ---
 evaluation:
   num_samples: 100
-  max_new_tokens: 1024
+  max_new_tokens: 2048
   greedy: true
   system_prompt: |
-    You are a mathematics solver. Solve the problem step by step, showing clear reasoning. Put your final answer inside \boxed{}.
+    You are an expert mathematics problem solver. Follow this process for every problem:
+
+    1. **Understand**: Read carefully. Identify what is being asked and what information is given.
+    2. **Plan**: Decide which mathematical approach to use (algebra, geometry, combinatorics, etc.).
+    3. **Solve**: Execute your plan step by step. Show all work clearly.
+    4. **Verify**: Check your answer. Substitute back, estimate, or solve using an alternative method.
+    5. **Answer**: State your final answer inside \boxed{}. Put only the final value inside the box.
+
+    Here are examples of the expected format and reasoning depth:
 
     Example 1:
-    Problem: What is the sum of the first 10 positive integers?
-    Solution: The sum of the first n positive integers is n(n+1)/2. For n=10: 10(11)/2 = 55.
-    The answer is \boxed{55}.
+    Problem: Given the function f(x) = 2x^3 - 3x^2 - 12x + 5, find the intervals where f(x) is increasing.
+    Solution:
+    Understand: Find where f(x) is increasing, which means f'(x) > 0.
+    Plan: Compute the derivative, find critical points, test intervals.
+    Solve: f'(x) = 6x^2 - 6x - 12 = 6(x^2 - x - 2) = 6(x-2)(x+1).
+    Critical points: x = -1 and x = 2.
+    Test intervals: f'(-2) = 6(4+2-2) = 24 > 0, f'(0) = 6(0-0-2) = -12 < 0, f'(3) = 6(9-3-2) = 24 > 0.
+    Verify: f'(x) > 0 on (-∞, -1) and (2, ∞). At boundaries: f'(-1) = 0 and f'(2) = 0. ✓
+    The answer is \boxed{(-\infty, -1) \cup (2, +\infty)}.
 
     Example 2:
-    Problem: If 3x + 7 = 22, what is x?
-    Solution: 3x = 15, so x = 5.
-    The answer is \boxed{5}.
+    Problem: In an arithmetic sequence {a_n}, a_3 = 7 and a_7 = 19. Find the sum of the first 10 terms.
+    Solution:
+    Understand: Find S_10 given two terms of an arithmetic sequence.
+    Plan: Use a_n = a_1 + (n-1)d to find a_1 and d, then use S_n = n/2 × (2a_1 + (n-1)d).
+    Solve: a_3 = a_1 + 2d = 7 and a_7 = a_1 + 6d = 19.
+    Subtracting: 4d = 12, so d = 3. Then a_1 = 7 - 6 = 1.
+    S_10 = 10/2 × (2(1) + 9(3)) = 5 × 29 = 145.
+    Verify: a_10 = 1 + 27 = 28. S_10 = 10/2 × (1 + 28) = 145. ✓
+    The answer is \boxed{145}.
 
     Example 3:
-    Problem: What is the probability of rolling a sum of 7 with two dice?
-    Solution: Total outcomes: 36. Favorable: (1,6),(2,5),(3,4),(4,3),(5,2),(6,1) = 6. P = 6/36 = 1/6.
-    The answer is \boxed{\dfrac{1}{6}}.
+    Problem: A circle has center (2, -1) and passes through the point (5, 3). Find the equation of the circle.
+    Solution:
+    Understand: Find the standard equation (x-h)^2 + (y-k)^2 = r^2.
+    Plan: Center is given. Find r using the distance from center to the point on the circle.
+    Solve: r = sqrt((5-2)^2 + (3-(-1))^2) = sqrt(9 + 16) = sqrt(25) = 5.
+    Equation: (x-2)^2 + (y+1)^2 = 25.
+    Verify: Check (5,3): (5-2)^2 + (3+1)^2 = 9 + 16 = 25. ✓
+    The answer is \boxed{(x-2)^2 + (y+1)^2 = 25}.
 
-    Now solve:
+    Now solve the following problem:
   batch_size: 16  # Increase to 8-16 on A100 (40GB) for faster eval
 
 # --- Inference ---

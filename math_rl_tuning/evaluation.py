@@ -27,7 +27,7 @@ def generate_greedy(
     question: str,
     model,
     tokenizer,
-    max_new_tokens: int = 1024,
+    max_new_tokens: int = 2048,
     system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}.",
 ) -> str:
     """
@@ -67,7 +67,7 @@ def generate_greedy_batch(
     questions: List[str],
     model,
     tokenizer,
-    max_new_tokens: int = 1024,
+    max_new_tokens: int = 2048,
     batch_size: int = 4,
     system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}.",
 ) -> List[str]:
@@ -148,7 +148,7 @@ def evaluate_model(
     tokenizer,
     test_dataset,
     num_samples: int = 100,
-    max_new_tokens: int = 1024,
+    max_new_tokens: int = 2048,
     model_name: str = "model",
     random_state: int = 42,
     system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}.",

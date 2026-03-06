@@ -2,8 +2,9 @@
 Evaluation module.
 
 Provides:
+  - Batched greedy generation for fast evaluation
   - Single-model accuracy evaluation (boxed answer extraction + comparison)
-  - Head-to-head comparison of SFT vs RL models
+  - Head-to-head comparison of SFT vs RL models (with adapter swapping)
   - Result saving to JSON/CSV
 """
 
@@ -11,7 +12,7 @@ import os
 import json
 import torch
 import pandas as pd
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from tqdm import tqdm
 
 from math_rl_tuning.config import Config
@@ -19,14 +20,14 @@ from math_rl_tuning.utils import extract_boxed, clean_memory, math_verify_equal
 
 
 # ---------------------------------------------------------------------------
-# Greedy generation for evaluation
+# Greedy generation (single example — kept for interactive use)
 # ---------------------------------------------------------------------------
 
 def generate_greedy(
     question: str,
     model,
     tokenizer,
-    max_new_tokens: int = 512,
+    max_new_tokens: int = 1024,
     system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}.",
 ) -> str:
     """
@@ -59,6 +60,86 @@ def generate_greedy(
 
 
 # ---------------------------------------------------------------------------
+# Batched greedy generation (for fast evaluation)
+# ---------------------------------------------------------------------------
+
+def generate_greedy_batch(
+    questions: List[str],
+    model,
+    tokenizer,
+    max_new_tokens: int = 1024,
+    batch_size: int = 4,
+    system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}.",
+) -> List[str]:
+    """
+    Generate responses for multiple questions using batched greedy decoding.
+
+    Left-pads inputs (required for correct batched generation) and processes
+    questions in chunks of *batch_size*.
+    """
+    # Save original padding config
+    orig_padding_side = tokenizer.padding_side
+    orig_pad_token = tokenizer.pad_token_id
+    tokenizer.padding_side = "left"
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token_id = tokenizer.eos_token_id
+
+    all_outputs = []
+
+    for i in tqdm(range(0, len(questions), batch_size), desc="Batches"):
+        batch_questions = questions[i : i + batch_size]
+
+        # Format each question as a chat message
+        batch_prompts = [
+            tokenizer.apply_chat_template(
+                [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": q},
+                ],
+                tokenize=False,
+                add_generation_prompt=True,
+            )
+            for q in batch_questions
+        ]
+
+        # Tokenize with left-padding
+        inputs = tokenizer(
+            batch_prompts,
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+        ).to(model.device)
+
+        prompt_lengths = [
+            (inputs["attention_mask"][j] == 1).sum().item()
+            for j in range(len(batch_questions))
+        ]
+
+        with torch.no_grad():
+            output_ids = model.generate(
+                **inputs,
+                max_new_tokens=max_new_tokens,
+                do_sample=False,
+                pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
+                eos_token_id=tokenizer.eos_token_id,
+            )
+
+        # Decode each output, skipping prompt tokens
+        for j in range(len(batch_questions)):
+            # The input length includes padding; use attention mask to find real prompt length
+            input_len = inputs["input_ids"].shape[1]
+            new_tokens = output_ids[j][input_len:]
+            text = tokenizer.decode(new_tokens, skip_special_tokens=True)
+            all_outputs.append(text)
+
+    # Restore original padding config
+    tokenizer.padding_side = orig_padding_side
+    tokenizer.pad_token_id = orig_pad_token
+
+    return all_outputs
+
+
+# ---------------------------------------------------------------------------
 # Evaluate a single model on the test set
 # ---------------------------------------------------------------------------
 
@@ -66,16 +147,18 @@ def evaluate_model(
     model,
     tokenizer,
     test_dataset,
-    num_samples: int = 50,
-    max_new_tokens: int = 512,
+    num_samples: int = 100,
+    max_new_tokens: int = 1024,
     model_name: str = "model",
     random_state: int = 42,
+    system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}.",
+    batch_size: int = 4,
 ) -> Tuple[pd.DataFrame, float]:
     """
     Evaluate a model on *num_samples* from *test_dataset*.
 
     Compares extracted \\boxed{} answers (with normalization and symbolic
-    equality fallback).
+    equality fallback).  Uses batched generation for speed.
 
     Args:
         model: The loaded model (already on device).
@@ -85,6 +168,8 @@ def evaluate_model(
         max_new_tokens: Max tokens to generate per example.
         model_name: Label for this model in the results DataFrame.
         random_state: Seed for reproducible sampling.
+        system_prompt: System instruction prepended to the conversation.
+        batch_size: Number of examples to process per batch.
 
     Returns:
         (results_df, accuracy) — a DataFrame of per-example results and
@@ -97,22 +182,25 @@ def evaluate_model(
     else:
         subset = test_df
 
+    print(f"Evaluating {model_name} on {len(subset)} examples (batch_size={batch_size})...")
+
+    # Collect all questions and generate in batches
+    rows = list(subset.iterrows())
+    questions = [row["problem"] for _, row in rows]
+    outputs = generate_greedy_batch(
+        questions, model, tokenizer,
+        max_new_tokens=max_new_tokens,
+        batch_size=batch_size,
+        system_prompt=system_prompt,
+    )
+
+    # Score results
     results = []
     correct = 0
 
-    print(f"Evaluating {model_name} on {len(subset)} examples...")
-
-    for _, row in tqdm(subset.iterrows(), total=len(subset)):
-        question = row["problem"]
-
-        # Generate
-        output = generate_greedy(question, model, tokenizer, max_new_tokens)
-
-        # Extract answers from \boxed{} first, then compare semantically
+    for (_, row), output in zip(rows, outputs):
         gold_answer = extract_boxed(row["solution"])
         pred_answer = extract_boxed(output)
-
-        # Compare using math-verify (semantic equality)
         is_correct = math_verify_equal(gold_answer, pred_answer)
 
         if is_correct:
@@ -120,7 +208,7 @@ def evaluate_model(
 
         results.append({
             "model": model_name,
-            "problem_snippet": str(question)[:80],
+            "problem_snippet": str(row["problem"])[:80],
             "ground_truth": gold_answer,
             "predicted": pred_answer,
             "is_correct": is_correct,
@@ -163,6 +251,8 @@ def evaluate_adapter(
         num_samples=num_samples,
         max_new_tokens=cfg.evaluation.max_new_tokens,
         model_name=name,
+        system_prompt=cfg.evaluation.system_prompt,
+        batch_size=cfg.evaluation.batch_size,
     )
 
     # Cleanup
@@ -179,7 +269,7 @@ def evaluate_adapter(
 def evaluate_base_model(
     cfg: Config,
     test_dataset,
-    num_samples: int = 50,
+    num_samples: int = 100,
     model_name: str = "Base",
 ) -> Tuple[pd.DataFrame, float]:
     """
@@ -199,6 +289,8 @@ def evaluate_base_model(
         num_samples=num_samples,
         max_new_tokens=cfg.evaluation.max_new_tokens,
         model_name=model_name,
+        system_prompt=cfg.evaluation.system_prompt,
+        batch_size=cfg.evaluation.batch_size,
     )
 
     del model, tokenizer
@@ -208,7 +300,7 @@ def evaluate_base_model(
 
 
 # ---------------------------------------------------------------------------
-# Head-to-head comparison
+# Head-to-head comparison (loads base model once, swaps adapters)
 # ---------------------------------------------------------------------------
 
 def compare_models(
@@ -222,46 +314,81 @@ def compare_models(
     """
     Evaluate Base, SFT, and RL models side-by-side and print a comparison.
 
-    Returns a dict with results DataFrames and accuracy scores.
-    Set include_base=False to skip the base model evaluation.
+    Loads the base model once and swaps LoRA adapters to avoid redundant
+    model reloads.  Returns a dict with results DataFrames and accuracy scores.
     """
+    from peft import PeftModel
+    from math_rl_tuning.model import load_model_and_tokenizer
+
     print("=" * 50)
     print("  HEAD-TO-HEAD MODEL COMPARISON")
     print("=" * 50)
 
+    ec = cfg.evaluation
     results = {}
 
-    # Evaluate Base (optional)
+    # Load base model once
+    print(f"\nLoading base model: {cfg.model.name}")
+    base_model, tokenizer = load_model_and_tokenizer(cfg, stage="sft", inference=True)
+
+    # --- Evaluate Base (optional) ---
     if include_base:
-        base_df, base_acc = evaluate_base_model(
-            cfg=cfg,
+        base_df, base_acc = evaluate_model(
+            model=base_model,
+            tokenizer=tokenizer,
             test_dataset=test_dataset,
             num_samples=num_samples,
+            max_new_tokens=ec.max_new_tokens,
+            model_name="Base",
+            system_prompt=ec.system_prompt,
+            batch_size=ec.batch_size,
         )
         results["base_results"] = base_df
         results["base_accuracy"] = base_acc
 
-    # Evaluate SFT
-    sft_df, sft_acc = evaluate_adapter(
-        adapter_path=sft_adapter_path,
+    # --- Evaluate SFT (swap adapter onto base model) ---
+    print(f"\nLoading SFT adapter: {sft_adapter_path}")
+    sft_model = PeftModel.from_pretrained(base_model, sft_adapter_path)
+    sft_model.eval()
+
+    sft_df, sft_acc = evaluate_model(
+        model=sft_model,
+        tokenizer=tokenizer,
         test_dataset=test_dataset,
-        cfg=cfg,
         num_samples=num_samples,
+        max_new_tokens=ec.max_new_tokens,
         model_name="SFT",
+        system_prompt=ec.system_prompt,
+        batch_size=ec.batch_size,
     )
     results["sft_results"] = sft_df
     results["sft_accuracy"] = sft_acc
 
-    # Evaluate RL
-    rl_df, rl_acc = evaluate_adapter(
-        adapter_path=rl_adapter_path,
+    # Free SFT adapter, keep base model
+    del sft_model
+    clean_memory(verbose=False)
+
+    # --- Evaluate RL (swap adapter onto base model) ---
+    print(f"\nLoading RL adapter: {rl_adapter_path}")
+    rl_model = PeftModel.from_pretrained(base_model, rl_adapter_path)
+    rl_model.eval()
+
+    rl_df, rl_acc = evaluate_model(
+        model=rl_model,
+        tokenizer=tokenizer,
         test_dataset=test_dataset,
-        cfg=cfg,
         num_samples=num_samples,
+        max_new_tokens=ec.max_new_tokens,
         model_name="RL (GRPO)",
+        system_prompt=ec.system_prompt,
+        batch_size=ec.batch_size,
     )
     results["rl_results"] = rl_df
     results["rl_accuracy"] = rl_acc
+
+    # Final cleanup
+    del rl_model, base_model, tokenizer
+    clean_memory(verbose=True)
 
     # Summary
     print("\n" + "=" * 50)

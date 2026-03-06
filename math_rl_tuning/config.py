@@ -167,9 +167,11 @@ class RewardsConfig:
 
 @dataclass
 class EvaluationConfig:
-    num_samples: int = 50
+    num_samples: int = 100
     max_new_tokens: int = 1024
     greedy: bool = True
+    system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}."
+    batch_size: int = 4
 
 
 @dataclass

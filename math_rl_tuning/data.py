@@ -334,5 +334,13 @@ def prepare_test_data(cfg: Config) -> Dataset:
     test_df = ds["test"].to_pandas()
     test_df = filter_sources(test_df, dc.test_drop_sources)
 
+    if len(test_df) < cfg.evaluation.num_samples:
+        print(
+            f"WARNING: Test set ({len(test_df)} examples) is smaller than "
+            f"evaluation.num_samples ({cfg.evaluation.num_samples}). "
+            f"All {len(test_df)} examples will be used."
+        )
+
     print(f"Test set size: {len(test_df)}")
+    print(f"Test set sources: {sorted(test_df['source'].unique())}")
     return Dataset.from_pandas(test_df)

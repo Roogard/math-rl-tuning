@@ -73,8 +73,6 @@ dataset:
     - "synthetic_math"
     - "amc_aime"
     - "synthetic_amc"
-    - "math"
-    - "gsm8k"
   # Sources to DROP from GRPO train set (only used if grpo_dataset_name is NuminaMath)
   grpo_drop_sources:
     - "olympiads"
@@ -164,9 +162,29 @@ rewards:
 
 # --- Evaluation ---
 evaluation:
-  num_samples: 50
+  num_samples: 100
   max_new_tokens: 1024
   greedy: true
+  system_prompt: |
+    You are a mathematics solver. Solve the problem step by step, showing clear reasoning. Put your final answer inside \boxed{}.
+
+    Example 1:
+    Problem: What is the sum of the first 10 positive integers?
+    Solution: The sum of the first n positive integers is n(n+1)/2. For n=10: 10(11)/2 = 55.
+    The answer is \boxed{55}.
+
+    Example 2:
+    Problem: If 3x + 7 = 22, what is x?
+    Solution: 3x = 15, so x = 5.
+    The answer is \boxed{5}.
+
+    Example 3:
+    Problem: What is the probability of rolling a sum of 7 with two dice?
+    Solution: Total outcomes: 36. Favorable: (1,6),(2,5),(3,4),(4,3),(5,2),(6,1) = 6. P = 6/36 = 1/6.
+    The answer is \boxed{\dfrac{1}{6}}.
+
+    Now solve:
+  batch_size: 4  # Increase to 8-16 on A100 (40GB) for faster eval
 
 # --- Inference ---
 inference:

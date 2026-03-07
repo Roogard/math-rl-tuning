@@ -152,25 +152,41 @@ def extract_boxed(text: str) -> Optional[str]:
     return result
 
 
-def math_verify_equal(gold_answer: str, pred_answer: str) -> bool:
+def math_verify_equal(gold_text: str, pred_text: str) -> bool:
     """
-    Compare two extracted answer strings using math-verify.
+    Compare gold solution and model output using math-verify.
 
-    Both inputs should be the answer itself (e.g. ``\\dfrac{17}{32}``),
-    NOT the full solution text. Use ``extract_boxed()`` first to get them.
+    Pass the FULL text (not pre-extracted answers). math-verify handles
+    extraction from \\boxed{} internally via LatexExtractionConfig.
     """
-    if not gold_answer or not pred_answer:
+    if not gold_text or not pred_text:
         return False
     try:
         from math_verify import parse, verify
+        from math_verify.parser import LatexExtractionConfig, ExprExtractionConfig, StringExtractionConfig
+        from latex2sympy2_extended.math_normalization import NormalizationConfig
 
-        gold_parsed = parse(gold_answer, extraction_mode="first_match")
-        if len(gold_parsed) == 0:
-            return False
-        pred_parsed = parse(pred_answer, extraction_mode="first_match")
-        if len(pred_parsed) == 0:
-            return False
-        return bool(verify(gold_parsed, pred_parsed))
+        norm_config = NormalizationConfig(basic_latex=True, units=True)
+        latex_config = LatexExtractionConfig(
+            boxed_match_priority=0,
+            normalization_config=norm_config,
+        )
+        configs = [latex_config, ExprExtractionConfig()]
+
+        # Try LaTeX + Expr extraction (handles most math answers)
+        gold_parsed = parse(gold_text, extraction_config=configs)
+        pred_parsed = parse(pred_text, extraction_config=configs)
+        if gold_parsed and pred_parsed:
+            if verify(gold_parsed, pred_parsed):
+                return True
+
+        # Fallback: StringExtractionConfig for MCQ (A/B/C/D) answers
+        gold_parsed = parse(gold_text, extraction_config=[StringExtractionConfig()])
+        pred_parsed = parse(pred_text, extraction_config=[StringExtractionConfig()])
+        if gold_parsed and pred_parsed:
+            return bool(verify(gold_parsed, pred_parsed))
+
+        return False
     except Exception:
         return False
 

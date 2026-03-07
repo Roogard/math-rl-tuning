@@ -199,9 +199,10 @@ def evaluate_model(
     correct = 0
 
     for (_, row), output in zip(rows, outputs):
+        # Pass full text to math_verify_equal — it handles extraction internally
+        is_correct = math_verify_equal(row["solution"], output)
         gold_answer = extract_boxed(row["solution"])
         pred_answer = extract_boxed(output)
-        is_correct = math_verify_equal(gold_answer, pred_answer)
 
         if is_correct:
             correct += 1

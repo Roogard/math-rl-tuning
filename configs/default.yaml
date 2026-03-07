@@ -108,7 +108,7 @@ sft_training:
   max_length: 2048
   dataset_text_field: "messages"
   completion_only_loss: true
-  packing: false
+  packing: true
   dataset_num_proc: 24
   report_to: "wandb"
   wandb_project: "AI-MONuminaMath"

@@ -92,9 +92,9 @@ dataset:
 # --- SFT Training ---
 sft_training:
   num_train_epochs: 1
-  per_device_train_batch_size: 4
+  per_device_train_batch_size: 2
   per_device_eval_batch_size: 2
-  gradient_accumulation_steps: 4
+  gradient_accumulation_steps: 8
   gradient_checkpointing: true
   # fp16/bf16: leave both false to auto-detect based on GPU capability.
   # On Ampere+ GPUs (A100, L4, etc.) bf16 is used; on older GPUs fp16 is used.

@@ -29,18 +29,13 @@ def _get_content(completion) -> str:
 # Reward functions (use config values via closure)
 # ---------------------------------------------------------------------------
 
-_debug_step = 0  # counter for debug printing
-
-
 def _make_correctness_reward(cfg: RewardsConfig):
     r"""Correctness reward matching the evaluation pipeline exactly."""
     def correctness_reward_func(prompts, completions, answer, **kwargs) -> list[float]:
-        global _debug_step
-        _debug_step += 1
         responses = [_get_content(c) for c in completions]
         results = []
 
-        for i, (r, a) in enumerate(zip(responses, answer)):
+        for r, a in zip(responses, answer):
             pred = extract_boxed(r)
             a_str = str(a).strip()
 
@@ -50,11 +45,6 @@ def _make_correctness_reward(cfg: RewardsConfig):
             # Method 2: fallback — direct comparison of extracted boxed values
             if not is_correct and pred is not None:
                 is_correct = pred.strip() == a_str
-
-            # Debug: print first 8 comparisons for first 3 steps
-            if i < 8 and _debug_step <= 3:
-                print(f"  [reward] gold='{a_str}' | pred_boxed='{pred}' | "
-                      f"correct={is_correct} | resp_len={len(r)}")
 
             results.append(cfg.correct_bonus if is_correct else cfg.incorrect_penalty)
 

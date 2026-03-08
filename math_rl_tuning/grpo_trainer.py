@@ -150,10 +150,13 @@ def run_grpo_training(
     print("\n" + "=" * 60)
     print("PHASE 2: Load Model for RL")
     print("=" * 60)
+    gc = cfg.grpo_training
+    grpo_seq_len = gc.max_prompt_length + gc.max_completion_length
     if HAS_UNSLOTH:
         print("Using Unsloth FastLanguageModel")
         model, tokenizer = load_unsloth_model(
-            cfg, model_path=merged_path, for_training=True
+            cfg, model_path=merged_path, for_training=True,
+            max_seq_length=grpo_seq_len,
         )
     else:
         print("Unsloth not available — using standard HuggingFace")

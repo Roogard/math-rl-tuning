@@ -4,12 +4,10 @@ Reward functions for GRPO reinforcement learning.
 TRL passes completions as list of list of message dicts:
     completions = [[{"role": "assistant", "content": "..."}], ...]
 
-Five reward functions:
-  1. correctness    — semantic match of \boxed{} answer via math-verify (2.0)
-  2. int_check      — is the extracted answer an integer? (0.5)
-  3. boxed_format   — does the output contain \boxed{}? (0.5)
-  4. strict_format  — output ends cleanly with \boxed{} (0.5)
-  5. boxed_count    — graduated scoring for \boxed{} usage (up to 0.5)
+Three reward functions:
+  1. correctness    — semantic match of \boxed{} answer via math-verify
+  2. boxed_format   — does the output contain \boxed{}?
+  3. strict_format  — output ends cleanly with \boxed{}
 """
 
 import re
@@ -28,56 +26,45 @@ def _get_content(completion) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Reward functions
+# Reward functions (use config values via closure)
 # ---------------------------------------------------------------------------
 
-def correctness_reward_func(prompts, completions, answer, **kwargs) -> list[float]:
+def _make_correctness_reward(cfg: RewardsConfig):
     r"""Semantic match of extracted \boxed{} answer vs ground truth using math-verify."""
-    responses = [_get_content(c) for c in completions]
-    extracted = [extract_boxed(r) for r in responses]
-    return [2.0 if math_verify_equal(a, e) else 0.0 for e, a in zip(extracted, answer)]
+    def correctness_reward_func(prompts, completions, answer, **kwargs) -> list[float]:
+        responses = [_get_content(c) for c in completions]
+        extracted = [extract_boxed(r) for r in responses]
+        return [
+            cfg.correct_bonus if math_verify_equal(a, e) else cfg.incorrect_penalty
+            for e, a in zip(extracted, answer)
+        ]
+    correctness_reward_func.__name__ = "correctness_reward_func"
+    return correctness_reward_func
 
 
-def int_reward_func(completions, **kwargs) -> list[float]:
-    r"""Check if extracted \boxed{} answer is a pure integer."""
-    responses = [_get_content(c) for c in completions]
-    extracted = [extract_boxed(r) or "" for r in responses]
-    return [0.5 if e.isdigit() else 0.0 for e in extracted]
+def _make_boxed_format_reward(cfg: RewardsConfig):
+    r"""Reward for using \boxed{} format; penalize missing it."""
+    def boxed_format_reward_func(completions, **kwargs) -> list[float]:
+        responses = [_get_content(c) for c in completions]
+        return [
+            cfg.format_bonus if "\\boxed{" in r else cfg.format_penalty
+            for r in responses
+        ]
+    boxed_format_reward_func.__name__ = "boxed_format_reward_func"
+    return boxed_format_reward_func
 
 
-def boxed_format_reward_func(completions, **kwargs) -> list[float]:
-    r"""Reward for using \boxed{} format in the answer."""
-    responses = [_get_content(c) for c in completions]
-    return [0.5 if "\\boxed{" in r else 0.0 for r in responses]
-
-
-def strict_format_reward_func(completions, **kwargs) -> list[float]:
+def _make_strict_format_reward(cfg: RewardsConfig):
     r"""Reward for clean format: reasoning followed by \boxed{} near the end."""
     pattern = r"\\boxed\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}\s*\.?\s*$"
-    responses = [_get_content(c) for c in completions]
-    return [0.5 if re.search(pattern, r) else 0.0 for r in responses]
-
-
-def _score_boxed(text: str) -> float:
-    """Graduated scoring for boxed answer format."""
-    score = 0.0
-    if "\\boxed{" in text:
-        score += 0.25
-    boxed = extract_boxed(text)
-    if boxed is not None:
-        score += 0.125
-        # Penalize trailing text after boxed (model should stop after the answer)
-        last_boxed_end = text.rfind("}")
-        trailing = text[last_boxed_end + 1:].strip() if last_boxed_end != -1 else ""
-        if len(trailing) < 20:
-            score += 0.125
-    return score
-
-
-def boxed_count_reward_func(completions, **kwargs) -> list[float]:
-    r"""Graduated \boxed{} format scoring."""
-    contents = [_get_content(c) for c in completions]
-    return [_score_boxed(c) for c in contents]
+    def strict_format_reward_func(completions, **kwargs) -> list[float]:
+        responses = [_get_content(c) for c in completions]
+        return [
+            cfg.strict_format_bonus if re.search(pattern, r) else 0.0
+            for r in responses
+        ]
+    strict_format_reward_func.__name__ = "strict_format_reward_func"
+    return strict_format_reward_func
 
 
 # ---------------------------------------------------------------------------
@@ -96,10 +83,9 @@ def build_reward_functions(rewards_cfg: RewardsConfig = None):
         reward_fns = build_reward_functions(cfg.rewards)
         trainer = GRPOTrainer(reward_funcs=reward_fns, ...)
     """
+    cfg = rewards_cfg or RewardsConfig()
     return [
-        boxed_count_reward_func,
-        boxed_format_reward_func,
-        strict_format_reward_func,
-        int_reward_func,
-        correctness_reward_func,
+        _make_boxed_format_reward(cfg),
+        _make_strict_format_reward(cfg),
+        _make_correctness_reward(cfg),
     ]

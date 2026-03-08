@@ -157,12 +157,10 @@ class GRPOTrainingConfig:
 @dataclass
 class RewardsConfig:
     correct_bonus: float = 3.0
-    incorrect_penalty: float = -0.5
-    approximate_bonus: float = 1.5
-    format_exact_bonus: float = 3.0
-    format_tag_bonus: float = 0.5
-    format_tag_penalty: float = -0.5
-    number_extraction_bonus: float = 1.5
+    incorrect_penalty: float = -1.0
+    format_bonus: float = 0.5
+    format_penalty: float = -0.5
+    strict_format_bonus: float = 0.5
 
 
 @dataclass

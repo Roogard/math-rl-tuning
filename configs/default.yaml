@@ -150,16 +150,13 @@ rewards:
   # Points for correct answer (semantic match via math-verify)
   correct_bonus: 3.0
   # Penalty for wrong answer (negative signal)
-  incorrect_penalty: -0.5
-  # Points for approximate answer (within 10%)
-  approximate_bonus: 1.5
-  # Points for using \boxed{} format
-  format_exact_bonus: 3.0
-  # Per-tag bonus/penalty for format compliance
-  format_tag_bonus: 0.5
-  format_tag_penalty: -0.5
-  # Points for extractable number in \boxed{}
-  number_extraction_bonus: 1.5
+  incorrect_penalty: -1.0
+  # Bonus for using \boxed{} format
+  format_bonus: 0.5
+  # Penalty for missing \boxed{} format
+  format_penalty: -0.5
+  # Bonus for clean ending with \boxed{} (no trailing text)
+  strict_format_bonus: 0.5
 
 # --- Evaluation ---
 evaluation:

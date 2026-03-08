@@ -126,7 +126,7 @@ grpo_training:
   weight_decay: 0.1
   lr_scheduler_type: "cosine"
   optim: "adamw_torch_fused"
-  per_device_train_batch_size: 48
+  per_device_train_batch_size: 32
   gradient_accumulation_steps: 2
   num_generations: 4
   max_prompt_length: 256
@@ -135,7 +135,7 @@ grpo_training:
   report_to: "wandb"
   use_vllm: false
   beta: 0.01
-  grpo_sample_size: 5000
+  grpo_sample_size: 3000
   max_grad_norm: 0.1
   logging_steps: 1
   save_strategy: "steps"

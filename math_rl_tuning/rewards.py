@@ -13,7 +13,7 @@ Three reward functions:
 import re
 
 from math_rl_tuning.config import RewardsConfig
-from math_rl_tuning.utils import extract_boxed, math_verify_equal
+from math_rl_tuning.utils import math_verify_equal
 
 
 def _get_content(completion) -> str:
@@ -33,10 +33,9 @@ def _make_correctness_reward(cfg: RewardsConfig):
     r"""Semantic match of extracted \boxed{} answer vs ground truth using math-verify."""
     def correctness_reward_func(prompts, completions, answer, **kwargs) -> list[float]:
         responses = [_get_content(c) for c in completions]
-        extracted = [extract_boxed(r) for r in responses]
         return [
-            cfg.correct_bonus if math_verify_equal(a, e) else cfg.incorrect_penalty
-            for e, a in zip(extracted, answer)
+            cfg.correct_bonus if math_verify_equal(a, r) else cfg.incorrect_penalty
+            for r, a in zip(responses, answer)
         ]
     correctness_reward_func.__name__ = "correctness_reward_func"
     return correctness_reward_func

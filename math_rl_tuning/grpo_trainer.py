@@ -161,9 +161,9 @@ def run_grpo_training(
             cfg, stage="grpo", model_path=merged_path
         )
 
-    # Ensure warnings_issued exists (some PEFT/TRL versions expect it)
+    # Ensure warnings_issued exists (TRL's GRPOTrainer uses it as a dict)
     if not hasattr(model, "warnings_issued"):
-        model.warnings_issued = set()
+        model.warnings_issued = {}
 
     # --- Phase 3: Prepare dataset ---
     print("\n" + "=" * 60)

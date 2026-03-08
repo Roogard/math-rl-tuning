@@ -13,7 +13,7 @@ Three reward functions:
 import re
 
 from math_rl_tuning.config import RewardsConfig
-from math_rl_tuning.utils import math_verify_equal
+from math_rl_tuning.utils import extract_boxed, math_verify_equal
 
 
 def _get_content(completion) -> str:
@@ -29,14 +29,36 @@ def _get_content(completion) -> str:
 # Reward functions (use config values via closure)
 # ---------------------------------------------------------------------------
 
+_debug_step = 0  # counter for debug printing
+
+
 def _make_correctness_reward(cfg: RewardsConfig):
-    r"""Semantic match of extracted \boxed{} answer vs ground truth using math-verify."""
+    r"""Correctness reward matching the evaluation pipeline exactly."""
     def correctness_reward_func(prompts, completions, answer, **kwargs) -> list[float]:
+        global _debug_step
+        _debug_step += 1
         responses = [_get_content(c) for c in completions]
-        return [
-            cfg.correct_bonus if math_verify_equal(a, r) else cfg.incorrect_penalty
-            for r, a in zip(responses, answer)
-        ]
+        results = []
+
+        for i, (r, a) in enumerate(zip(responses, answer)):
+            pred = extract_boxed(r)
+            a_str = str(a).strip()
+
+            # Method 1: math_verify_equal (same lib as eval)
+            is_correct = math_verify_equal(a_str, str(r))
+
+            # Method 2: fallback — direct comparison of extracted boxed values
+            if not is_correct and pred is not None:
+                is_correct = pred.strip() == a_str
+
+            # Debug: print first 8 comparisons for first 3 steps
+            if i < 8 and _debug_step <= 3:
+                print(f"  [reward] gold='{a_str}' | pred_boxed='{pred}' | "
+                      f"correct={is_correct} | resp_len={len(r)}")
+
+            results.append(cfg.correct_bonus if is_correct else cfg.incorrect_penalty)
+
+        return results
     correctness_reward_func.__name__ = "correctness_reward_func"
     return correctness_reward_func
 

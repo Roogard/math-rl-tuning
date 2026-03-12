@@ -34,6 +34,8 @@ def main():
                         help="Override evaluation output directory")
     parser.add_argument("--hf-token", type=str, default=None,
                         help="Hugging Face API token")
+    parser.add_argument("--all-sources", action="store_true",
+                        help="Evaluate on all test sources (ignore eval_keep_sources filter)")
     args = parser.parse_args()
 
     # Load config
@@ -43,6 +45,8 @@ def main():
         cfg.evaluation.num_samples = args.num_samples
     if args.output_dir is not None:
         cfg.paths.eval_output_dir = args.output_dir
+    if args.all_sources:
+        cfg.evaluation.eval_keep_sources = []
 
     # Setup
     print(f"Device: {get_device()}")

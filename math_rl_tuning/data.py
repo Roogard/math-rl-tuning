@@ -119,6 +119,16 @@ def _ensure_boxed_in_messages(example: dict) -> dict:
     return {"messages": msgs}
 
 
+def _has_valid_boxed_answer(example: dict) -> bool:
+    r"""Return True if the assistant message contains a non-empty ``\boxed{}`` answer."""
+    msgs = example.get("messages", [])
+    for msg in reversed(msgs):
+        if msg["role"] == "assistant":
+            answer = extract_boxed(msg["content"])
+            return answer is not None and len(answer.strip()) > 0
+    return False
+
+
 # ---------------------------------------------------------------------------
 # System prompt injection
 # ---------------------------------------------------------------------------
@@ -221,6 +231,12 @@ def prepare_sft_data(cfg: Config):
     # Ensure all assistant answers use \boxed{} (converts GSM8K's #### format)
     print("Normalizing answer format to \\boxed{}...")
     ds = ds.map(_ensure_boxed_in_messages)
+
+    # Filter out examples without valid \boxed{} answers
+    before_count = len(ds["train"])
+    ds["train"] = ds["train"].filter(_has_valid_boxed_answer)
+    after_count = len(ds["train"])
+    print(f"Data quality filter: {before_count} → {after_count} ({before_count - after_count} removed)")
 
     df = ds["train"].to_pandas()
 
@@ -333,6 +349,12 @@ def prepare_test_data(cfg: Config) -> Dataset:
     ds = load_numina_dataset(dc.name)
     test_df = ds["test"].to_pandas()
     test_df = filter_sources(test_df, dc.test_drop_sources)
+
+    # Optionally filter to only sources the model was trained on
+    eval_keep = getattr(cfg.evaluation, "eval_keep_sources", [])
+    if eval_keep:
+        test_df = keep_sources(test_df, eval_keep)
+        print(f"Eval source filter active — keeping only: {eval_keep}")
 
     if len(test_df) < cfg.evaluation.num_samples:
         print(

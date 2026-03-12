@@ -7,7 +7,7 @@ Full version-by-version details live in [project_spec.md](project_spec.md).
 
 ## Project Goals
 
-This is a resume side project demonstrating applied RL for LLM fine-tuning. The core goal is to take Mistral-7B and make it significantly better at math by:
+This is a resume side project demonstrating applied RL for LLM fine-tuning. The core goal is to take Qwen2.5-Math-7B-Instruct and make it significantly better at math by:
 
 1. Running SFT on curated math problems (NuminaMath-CoT)
 2. Running GRPO reinforcement learning on GSM8K to improve reasoning
@@ -23,10 +23,10 @@ The owner wants to understand every component well enough to discuss it in an in
 Two-stage training pipeline, both stages run on **Google Colab**:
 
 ```
-Mistral-7B-Instruct-v0.2
+Qwen2.5-Math-7B-Instruct
         │
-        ▼  SFT (TRL SFTTrainer, QLoRA r=16)
-        │  Dataset: NuminaMath-CoT (gsm8k + math sources)
+        ▼  SFT (TRL SFTTrainer, QLoRA r=32)
+        │  Dataset: NuminaMath-CoT (5 sources, ~60k examples, 2 epochs)
         ▼
   outputs/sft/  ← LoRA adapter
         │
@@ -35,11 +35,11 @@ Mistral-7B-Instruct-v0.2
   outputs/sft_merged/  ← full weights
         │
         ▼  GRPO (TRL GRPOTrainer + Unsloth FastLanguageModel, LoRA r=32)
-        │  Dataset: GSM8K  |  Reward: correctness + format XML tags
+        │  Dataset: GSM8K  |  Reward: correctness + \boxed{} format
         ▼
   outputs/grpo/  ← LoRA adapter
         │
-        ▼  Evaluation: base / SFT / GRPO accuracy on GSM8K test set
+        ▼  Evaluation: base / SFT / GRPO accuracy on NuminaMath test set
         ▼
   Static Gradio demo on HuggingFace Spaces (pre-computed answers, free tier)
 ```
@@ -73,15 +73,42 @@ Key source files:
 
 ---
 
+## SFT Overhaul (Latest Changes)
+
+Previous SFT was getting 59% accuracy while the base model got 65% — a performance degradation caused by catastrophic forgetting. After researching NuminaMath, OpenR1, Qwen2.5-Math, and DeepSeekMath, the following 10 changes were made:
+
+| Change | Before | After | Why |
+|---|---|---|---|
+| Base model | Qwen2.5-7B-Instruct | **Qwen2.5-Math-7B-Instruct** | Math-specialized, avoids overwriting general alignment |
+| LoRA rank | r=16, alpha=64, dropout=0.05 | **r=32, alpha=64, dropout=0.0** | More capacity for math; gentler scaling (alpha/r=2) |
+| Dataset sources | 3 (gsm8k, math, cn_k12) | **5 (+orca_math, synthetic_math)** | More diversity |
+| Dataset size | ~18k (6k/source) | **~60k (12k/source)** | Reference projects use 94k-860k |
+| Epochs | 1 | **2** | Reference projects use 3-4 |
+| Learning rate | 2e-5 | **5e-5** | LoRA benefits from higher LR; OpenR1 uses 5e-5 |
+| Warmup | 10 steps (<1%) | **10% ratio** | Proper warmup scaling |
+| NEFTune noise | alpha=5.0 | **Disabled** | Harmful for math precision; no reference project uses it |
+| Eval during training | Disabled | **Every 100 steps + load_best_model_at_end** | Detect overfitting |
+| Data quality filter | None | **Filter examples missing valid \boxed{} answer** | Remove garbage training data |
+
+**Files changed:** `configs/default.yaml`, `math_rl_tuning/config.py`, `math_rl_tuning/sft_trainer.py`, `math_rl_tuning/data.py`
+
+---
+
 ## Current Status
 
 | Stage | Status |
 |---|---|
-| SFT training | Done |
+| SFT training | Re-running with new config (targeting 70%+) |
 | Merge SFT adapter | Not started |
 | GRPO training | Not started |
 | Baseline evaluation | Not started |
 | v2 demo | Not started |
+
+**Next steps:**
+1. Run SFT with new config, verify accuracy > 65% (target 70%+)
+2. If LR 5e-5 spikes eval loss, fall back to 3e-5
+3. Run GRPO on the new SFT model
+4. Full pipeline evaluation (base vs SFT vs GRPO)
 
 Update this table as milestones are completed.
 

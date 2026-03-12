@@ -53,7 +53,7 @@ class PathsConfig:
 
 @dataclass
 class ModelConfig:
-    name: str = "Qwen/Qwen2.5-7B-Instruct"
+    name: str = "Qwen/Qwen2.5-Math-7B-Instruct"
     max_seq_length: int = 2048
 
 
@@ -67,9 +67,9 @@ class QuantizationConfig:
 
 @dataclass
 class LoRASubConfig:
-    r: int = 16
+    r: int = 32
     alpha: int = 64
-    dropout: float = 0.05
+    dropout: float = 0.0
     bias: str = "none"
     task_type: str = "CAUSAL_LM"
     target_modules: Any = "all-linear"  # str or list[str]
@@ -89,11 +89,11 @@ class LoRAConfig:
 class DatasetConfig:
     grpo_dataset_name: str = "openai/gsm8k"
     name: str = "AI-MO/NuminaMath-CoT"
-    sft_keep_sources: List[str] = field(default_factory=lambda: ["gsm8k", "math"])
+    sft_keep_sources: List[str] = field(default_factory=lambda: ["gsm8k", "math", "cn_k12", "orca_math", "synthetic_math"])
     test_drop_sources: List[str] = field(default_factory=list)
     grpo_drop_sources: List[str] = field(default_factory=list)
-    train_per_source: int = 6000
-    val_per_source: int = 1000
+    train_per_source: int = 12000
+    val_per_source: int = 500
     random_state: int = 42
     system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}."
     grpo_system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}."
@@ -110,10 +110,11 @@ class SFTTrainingConfig:
     bf16: bool = False
     learning_rate: float = 2e-5
     lr_scheduler_type: str = "cosine"
-    warmup_steps: int = 1
+    warmup_ratio: float = 0.1
     logging_steps: int = 25
     eval_strategy: str = "no"
-    neftune_noise_alpha: float = 5.0
+    neftune_noise_alpha: Optional[float] = None
+    eval_steps: int = 100
     max_length: int = 2048
     dataset_text_field: str = "messages"
     completion_only_loss: bool = True
@@ -170,6 +171,7 @@ class EvaluationConfig:
     greedy: bool = True
     system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}."
     batch_size: int = 4
+    eval_keep_sources: List[str] = field(default_factory=list)
 
 
 @dataclass

@@ -93,6 +93,7 @@ class DatasetConfig:
     test_drop_sources: List[str] = field(default_factory=list)
     grpo_drop_sources: List[str] = field(default_factory=list)
     train_per_source: int = 12000
+    train_per_source_overrides: Dict[str, int] = field(default_factory=dict)
     val_per_source: int = 500
     random_state: int = 42
     system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}."

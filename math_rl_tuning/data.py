@@ -50,20 +50,27 @@ def balanced_split(
     train_per_source: int = 6000,
     val_per_source: int = 1000,
     random_state: int = 42,
+    per_source_overrides: Optional[Dict[str, int]] = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Sample up to *train_per_source* training rows and *val_per_source*
     validation rows from each source group.
 
+    Per-source caps can be set via *per_source_overrides* dict, which
+    maps source names to their specific training cap. Sources not in
+    the dict use the global *train_per_source* default.
+
     Returns (train_df, val_df) — both shuffled.
     """
     train_blocks, val_blocks = [], []
+    overrides = per_source_overrides or {}
 
     for src, grp in df.groupby("source"):
         grp = grp.sample(frac=1.0, random_state=random_state).reset_index(drop=True)
         n = len(grp)
 
-        n_train = min(train_per_source, n)
+        cap = overrides.get(src, train_per_source)
+        n_train = min(cap, n)
         n_val = min(val_per_source, n - n_train)
 
         train_blocks.append(grp.iloc[:n_train])
@@ -253,6 +260,7 @@ def prepare_sft_data(cfg: Config):
         train_per_source=dc.train_per_source,
         val_per_source=dc.val_per_source,
         random_state=dc.random_state,
+        per_source_overrides=getattr(dc, "train_per_source_overrides", None),
     )
 
     print(f"Train: {len(train_df)}  |  Val: {len(val_df)}")

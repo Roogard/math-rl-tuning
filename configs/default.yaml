@@ -76,12 +76,12 @@ dataset:
     - "cn_k12"
     - "orca_math"
     - "synthetic_math"
-  # Sources to DROP from test set
-  test_drop_sources:
     - "olympiads"
     - "aops_forum"
-    - "synthetic_math"
     - "amc_aime"
+  # Sources to DROP from test set
+  test_drop_sources:
+    - "synthetic_math"
     - "synthetic_amc"
   # Sources to DROP from GRPO train set (only used if grpo_dataset_name is NuminaMath)
   grpo_drop_sources:
@@ -93,6 +93,13 @@ dataset:
     - "amc_aime"
     - "synthetic_amc"
   train_per_source: 12000
+  # Per-source overrides — reduce easy sources the model already knows
+  train_per_source_overrides:
+    gsm8k: 2000
+    orca_math: 2000
+    synthetic_math: 2000
+    cn_k12: 4000
+    math: 4000
   val_per_source: 500
   random_state: 42
   system_prompt: "Please reason step by step, and put your final answer within \\boxed{}."
@@ -100,7 +107,7 @@ dataset:
 
 # --- SFT Training ---
 sft_training:
-  num_train_epochs: 2
+  num_train_epochs: 1
   per_device_train_batch_size: 2
   per_device_eval_batch_size: 2
   gradient_accumulation_steps: 4
@@ -109,7 +116,7 @@ sft_training:
   # On Ampere+ GPUs (A100, L4, etc.) bf16 is used; on older GPUs fp16 is used.
   fp16: false
   bf16: false
-  learning_rate: 5.0e-5
+  learning_rate: 1.0e-5
   lr_scheduler_type: "cosine"
   warmup_ratio: 0.1
   logging_steps: 25
@@ -119,7 +126,7 @@ sft_training:
   max_length: 2048
   dataset_text_field: "messages"
   completion_only_loss: true
-  packing: true
+  packing: false
   dataset_num_proc: 24
   report_to: "wandb"
   wandb_project: "AI-MONuminaMath"
@@ -170,7 +177,7 @@ rewards:
 
 # --- Evaluation ---
 evaluation:
-  num_samples: 200
+  num_samples: 300
   max_new_tokens: 2048
   greedy: true
   system_prompt: "Please reason step by step, and put your final answer within \\boxed{}."
@@ -182,6 +189,9 @@ evaluation:
     - "cn_k12"
     - "orca_math"
     - "synthetic_math"
+    - "olympiads"
+    - "aops_forum"
+    - "amc_aime"
 
 # --- Inference ---
 inference:

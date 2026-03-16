@@ -109,7 +109,6 @@ class SFTTrainingConfig:
     gradient_checkpointing: bool = True
     fp16: bool = False
     bf16: bool = False
-    optim: str = "adamw_torch"
     learning_rate: float = 2e-5
     lr_scheduler_type: str = "cosine"
     warmup_ratio: float = 0.1

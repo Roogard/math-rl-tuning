@@ -103,8 +103,8 @@ dataset:
 # --- SFT Training ---
 sft_training:
   num_train_epochs: 1
-  per_device_train_batch_size: 4
-  per_device_eval_batch_size: 4
+  per_device_train_batch_size: 8
+  per_device_eval_batch_size: 8
   gradient_accumulation_steps: 2
   gradient_checkpointing: true
   # fp16/bf16: leave both false to auto-detect based on GPU capability.
@@ -116,7 +116,7 @@ sft_training:
   warmup_ratio: 0.1
   logging_steps: 25
   eval_strategy: "steps"
-  eval_steps: 100
+  eval_steps: 500
   neftune_noise_alpha: null
   max_length: 2048
   dataset_text_field: "messages"

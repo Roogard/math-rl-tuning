@@ -102,7 +102,7 @@ dataset:
 
 # --- SFT Training ---
 sft_training:
-  num_train_epochs: 2
+  num_train_epochs: 1
   per_device_train_batch_size: 2
   per_device_eval_batch_size: 2
   gradient_accumulation_steps: 4
@@ -121,7 +121,7 @@ sft_training:
   max_length: 2048
   dataset_text_field: "messages"
   completion_only_loss: true
-  packing: false
+  packing: true
   dataset_num_proc: 24
   report_to: "wandb"
   wandb_project: "AI-MONuminaMath"

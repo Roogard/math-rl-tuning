@@ -111,6 +111,7 @@ sft_training:
   # On Ampere+ GPUs (A100, L4, etc.) bf16 is used; on older GPUs fp16 is used.
   fp16: false
   bf16: false
+  optim: "paged_adamw_8bit"
   learning_rate: 2.0e-5
   lr_scheduler_type: "cosine"
   warmup_ratio: 0.1

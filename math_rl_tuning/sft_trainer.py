@@ -72,6 +72,7 @@ def build_sft_config(cfg: Config, output_dir: Optional[str] = None) -> SFTConfig
         gradient_checkpointing=sc.gradient_checkpointing,
         bf16=use_bf16,
         fp16=use_fp16,
+        optim=sc.optim,
         learning_rate=sc.learning_rate,
         lr_scheduler_type=sc.lr_scheduler_type,
         warmup_ratio=sc.warmup_ratio,

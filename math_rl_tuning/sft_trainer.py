@@ -11,7 +11,7 @@ from typing import Optional, Tuple
 
 from datasets import Dataset
 from trl import SFTConfig, SFTTrainer
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, EarlyStoppingCallback
 
 from math_rl_tuning.config import Config
 from math_rl_tuning.model import load_model_and_tokenizer
@@ -143,6 +143,17 @@ def run_sft_training(
     model.resize_token_embeddings(len(tokenizer))
     model.config.pad_token_id = tokenizer.pad_token_id
 
+    # Verify chat template works with this model
+    test_msgs = [{"role": "user", "content": "What is 2+2?"}]
+    try:
+        test_prompt = tokenizer.apply_chat_template(test_msgs, tokenize=False)
+        print(f"Chat template check passed. Sample:\n{test_prompt[:200]}")
+    except Exception as e:
+        raise RuntimeError(
+            f"Tokenizer for {cfg.model.name} lacks a chat template. "
+            f"Consider using the Instruct variant's tokenizer. Error: {e}"
+        )
+
     # 4. Training
     print("\n" + "=" * 60)
     print("PHASE 3: Training")
@@ -152,12 +163,21 @@ def run_sft_training(
 
     # Note: LoRA is already applied inside load_model_and_tokenizer(),
     # so we do NOT pass peft_config here (that would double-wrap).
+    sc = cfg.sft_training
+    callbacks = []
+    if sc.eval_strategy != "no" and sc.early_stopping_patience > 0:
+        callbacks.append(EarlyStoppingCallback(
+            early_stopping_patience=sc.early_stopping_patience,
+        ))
+        print(f"Early stopping enabled: patience={sc.early_stopping_patience}")
+
     trainer = SFTTrainer(
         model=model,
         args=sft_config,
         train_dataset=train_ds,
         eval_dataset=val_ds,
         processing_class=tokenizer,
+        callbacks=callbacks,
     )
 
     if checkpoint_path:

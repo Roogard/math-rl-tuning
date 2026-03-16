@@ -53,7 +53,7 @@ class PathsConfig:
 
 @dataclass
 class ModelConfig:
-    name: str = "Qwen/Qwen2.5-Math-7B-Instruct"
+    name: str = "Qwen/Qwen2.5-Math-7B"
     max_seq_length: int = 2048
 
 
@@ -113,7 +113,7 @@ class SFTTrainingConfig:
     lr_scheduler_type: str = "cosine"
     warmup_ratio: float = 0.1
     logging_steps: int = 25
-    eval_strategy: str = "no"
+    eval_strategy: str = "steps"
     neftune_noise_alpha: Optional[float] = None
     eval_steps: int = 100
     max_length: int = 2048
@@ -126,6 +126,7 @@ class SFTTrainingConfig:
     save_strategy: str = "steps"
     save_steps: int = 100
     save_total_limit: int = 3
+    early_stopping_patience: int = 3
 
 
 @dataclass

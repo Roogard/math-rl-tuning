@@ -20,7 +20,7 @@ paths:
 
 # --- Base Model ---
 model:
-  name: "Qwen/Qwen2.5-Math-7B-Instruct"
+  name: "Qwen/Qwen2.5-Math-7B"
   max_seq_length: 2048
 
 # --- Quantization (QLoRA / BitsAndBytes) ---
@@ -93,13 +93,8 @@ dataset:
     - "amc_aime"
     - "synthetic_amc"
   train_per_source: 12000
-  # Per-source overrides — reduce easy sources the model already knows
-  train_per_source_overrides:
-    gsm8k: 2000
-    orca_math: 2000
-    synthetic_math: 2000
-    cn_k12: 4000
-    math: 4000
+  # Per-source overrides (empty = use train_per_source for all)
+  train_per_source_overrides: {}
   val_per_source: 500
   random_state: 42
   system_prompt: "Please reason step by step, and put your final answer within \\boxed{}."
@@ -107,7 +102,7 @@ dataset:
 
 # --- SFT Training ---
 sft_training:
-  num_train_epochs: 1
+  num_train_epochs: 2
   per_device_train_batch_size: 2
   per_device_eval_batch_size: 2
   gradient_accumulation_steps: 4
@@ -116,7 +111,7 @@ sft_training:
   # On Ampere+ GPUs (A100, L4, etc.) bf16 is used; on older GPUs fp16 is used.
   fp16: false
   bf16: false
-  learning_rate: 1.0e-5
+  learning_rate: 2.0e-5
   lr_scheduler_type: "cosine"
   warmup_ratio: 0.1
   logging_steps: 25
@@ -133,6 +128,7 @@ sft_training:
   save_strategy: "steps"
   save_steps: 100
   save_total_limit: 3
+  early_stopping_patience: 3
 
 # --- GRPO / RL Training ---
 grpo_training:

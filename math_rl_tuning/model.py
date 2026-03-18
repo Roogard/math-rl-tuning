@@ -320,7 +320,6 @@ def load_unsloth_model(
         max_seq_length=seq_len,
         dtype=None,
         load_in_4bit=True,
-        fast_inference=False,  # Avoid rotary embedding shape mismatch in GRPO generation
     )
 
     if for_training:

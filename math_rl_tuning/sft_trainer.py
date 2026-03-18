@@ -16,7 +16,7 @@ from transformers import AutoTokenizer, EarlyStoppingCallback
 from math_rl_tuning.config import Config
 from math_rl_tuning.model import load_model_and_tokenizer
 from math_rl_tuning.data import prepare_sft_data
-from math_rl_tuning.utils import clean_memory
+from math_rl_tuning.utils import clean_memory, copy_to_drive
 
 
 # ---------------------------------------------------------------------------
@@ -161,11 +161,14 @@ def run_sft_training(
     print(f"Model: {cfg.model.name}")
     sft_config = build_sft_config(cfg)
 
-    # Note: LoRA is already applied inside load_model_and_tokenizer(),
-    # so we do NOT pass peft_config here (that would double-wrap).
+    # LoRA is already applied inside load_model_and_tokenizer(), so we do NOT
+    # pass peft_config to SFTTrainer — that would double-wrap the model with a
+    # second adapter, wasting parameters and causing shape mismatches.
     sc = cfg.sft_training
     callbacks = []
     if sc.eval_strategy != "no" and sc.early_stopping_patience > 0:
+        # Early stopping monitors eval_loss and stops if it doesn't improve
+        # for `patience` consecutive evals — prevents overfitting on long runs.
         callbacks.append(EarlyStoppingCallback(
             early_stopping_patience=sc.early_stopping_patience,
         ))
@@ -197,31 +200,10 @@ def run_sft_training(
 
     # 6. Optionally copy to Drive
     if save_to_drive:
-        _copy_to_drive(save_dir, cfg)
+        copy_to_drive(save_dir, "sft", cfg)
 
     # Switch to inference mode so callers can generate immediately
     model.eval()
     model.config.use_cache = True
 
     return trainer, model, tokenizer
-
-
-def _copy_to_drive(source_dir: str, cfg: Config):
-    """Copy saved model to Google Drive (Colab only)."""
-    import shutil
-    from math_rl_tuning.utils import is_colab, mount_google_drive
-
-    if not is_colab():
-        print("Not in Colab — skipping Drive copy.")
-        return
-
-    mount_google_drive(cfg.paths.drive_mount)
-
-    dest = os.path.join(cfg.paths.drive_save_dir, "sft")
-    if os.path.exists(dest):
-        print(f"Drive destination already exists: {dest}. Skipping.")
-        return
-
-    os.makedirs(os.path.dirname(dest), exist_ok=True)
-    shutil.copytree(source_dir, dest)
-    print(f"Copied to Drive: {dest}")

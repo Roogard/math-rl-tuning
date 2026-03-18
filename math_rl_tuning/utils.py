@@ -5,6 +5,7 @@ Shared utilities: memory management, answer extraction, environment helpers.
 import gc
 import os
 import re
+import shutil
 import sys
 import torch
 from typing import Optional
@@ -127,8 +128,13 @@ def extract_boxed(text: str) -> Optional[str]:
     r"""
     Extract the LAST ``\boxed{...}`` content from *text*.
 
-    Handles nested braces correctly, e.g. ``\boxed{\dfrac{17}{32}}``
-    extracts ``\dfrac{17}{32}`` instead of just ``\dfrac{17``.
+    We use a brace-counting loop rather than a regex because regex can't
+    handle nested braces like ``\boxed{\dfrac{1}{2}}`` — a greedy pattern
+    would close too early at the first ``}``. The loop tracks brace depth
+    explicitly, so arbitrarily nested LaTeX expressions work correctly.
+
+    Returns the LAST match (not the first) because some CoT responses
+    revise their answer, and the final \boxed{} is the intended one.
 
     Returns None if no boxed answer is found.
     """
@@ -138,23 +144,43 @@ def extract_boxed(text: str) -> Optional[str]:
     start_tag = "\\boxed{"
     idx = text.find(start_tag)
     while idx != -1:
-        depth = 1
+        depth = 1           # We're one level deep after consuming the opening '{'
         i = idx + len(start_tag)
         while i < len(text) and depth > 0:
             if text[i] == '{':
-                depth += 1
+                depth += 1  # Entering a nested brace group
             elif text[i] == '}':
-                depth -= 1
+                depth -= 1  # Closing a brace group
             i += 1
         if depth == 0:
+            # depth == 0 means we found the matching closing brace
             result = text[idx + len(start_tag):i - 1].strip()
         idx = text.find(start_tag, idx + 1)
     return result
 
 
+def copy_to_drive(source_dir: str, subdir: str, cfg):
+    """Copy saved model to Google Drive (Colab only)."""
+    if not is_colab():
+        return
+    mount_google_drive(cfg.paths.drive_mount)
+    dest = os.path.join(cfg.paths.drive_save_dir, subdir)
+    if os.path.exists(dest):
+        print(f"Drive destination already exists: {dest}. Skipping.")
+        return
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    shutil.copytree(source_dir, dest)
+    print(f"Copied to Drive: {dest}")
+
+
 def math_verify_equal(gold_text: str, pred_text: str) -> bool:
     """
     Compare gold solution and model output using math-verify.
+
+    Simple string comparison fails for mathematically equivalent expressions:
+    "1/2", "0.5", and "\\frac{1}{2}" are all the same answer but != as strings.
+    math-verify uses SymPy to verify symbolic equivalence, handling fractions,
+    decimals, expressions, and even multiple-choice letters (via StringExtractionConfig).
 
     Pass the FULL text (not pre-extracted answers). math-verify handles
     extraction from \\boxed{} internally via LatexExtractionConfig.

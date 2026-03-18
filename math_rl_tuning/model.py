@@ -111,9 +111,13 @@ def load_model_and_tokenizer(
     # Adding [PAD] resizes embeddings and the new row is randomly
     # initialized, which causes CUDA asserts when used for padding.
     if tokenizer.pad_token is None:
+        # Use EOS as PAD rather than adding a new [PAD] token.
+        # Adding a new token resizes the embedding table and the new row is
+        # randomly initialized — this causes CUDA asserts and unstable training.
         tokenizer.pad_token = tokenizer.eos_token
 
-    # Quantization
+    # Load model with 4-bit NF4 quantization (QLoRA).
+    # This reduces VRAM from ~14GB (fp16) to ~4GB, making 7B training feasible on a single GPU.
     bnb_config = build_bnb_config(cfg)
 
     print(f"Loading model: {name_or_path} (4-bit quantized)")
@@ -121,7 +125,7 @@ def load_model_and_tokenizer(
         name_or_path,
         quantization_config=bnb_config,
         device_map="auto",
-        use_cache=inference,  # disable cache during training
+        use_cache=inference,  # KV-cache speeds up inference but wastes VRAM during training
     )
 
     # Resize embeddings if we added tokens
@@ -129,12 +133,16 @@ def load_model_and_tokenizer(
     model.config.pad_token_id = tokenizer.pad_token_id
 
     if not inference:
+        # prepare_model_for_kbit_training unfreezes layer norms and casts them to fp32
+        # (quantized models freeze everything by default — this makes them trainable again).
         model = prepare_model_for_kbit_training(model)
 
-        # Attach LoRA adapter
+        # Attach LoRA adapter — only the low-rank matrices are trainable (~1-2% of params).
         lora_config = build_lora_config(cfg, stage=stage)
         model = get_peft_model(model, lora_config)
 
+        # Gradient checkpointing recomputes activations during backward pass
+        # instead of storing them, cutting VRAM usage at the cost of extra compute.
         model.gradient_checkpointing_enable()
         model.print_trainable_parameters()
 
@@ -228,6 +236,9 @@ def merge_adapter(
             f"This doesn't look like a valid LoRA adapter directory."
         )
 
+    # Merge is needed because Unsloth's FastLanguageModel can only load clean,
+    # non-PEFT models. We bake the LoRA weights into the base model first,
+    # then load the merged result for GRPO.
     print("Merging SFT adapter into base model...")
     base_name = cfg.model.name
 

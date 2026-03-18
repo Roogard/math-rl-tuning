@@ -9,42 +9,43 @@ Simplified pipeline matching the official Unsloth GRPO notebook:
 """
 
 import os
-import shutil
 from collections import defaultdict
 from typing import Optional, Tuple
 
 # Import TRL's GRPOTrainer BEFORE unsloth to save the original class.
-# Unsloth's import replaces trl.GRPOTrainer with UnslothGRPOTrainer which
-# has a known tensor-shape bug in compute_loss (completion_mask size mismatch).
+# Unsloth monkey-patches trl.GRPOTrainer with its own UnslothGRPOTrainer,
+# which has a known tensor-shape bug in compute_loss (completion_mask size mismatch).
+# By capturing the reference before the monkey-patch, we get Unsloth's fast model
+# loading while still using TRL's correct training logic.
 from trl import GRPOTrainer as _OriginalGRPOTrainer, GRPOConfig
 from transformers import TrainerCallback
 from datasets import Dataset
 
-# Now import unsloth for FastLanguageModel (model loading optimizations).
-# This will monkey-patch trl.GRPOTrainer, but we already saved the original.
-try:
-    from unsloth import FastLanguageModel
-    HAS_UNSLOTH = True
-except ImportError:
-    HAS_UNSLOTH = False
+# This triggers the monkey-patch, but we've already saved the original.
+from unsloth import FastLanguageModel
 
-# Use the original TRL GRPOTrainer to avoid Unsloth's buggy compiled version
+# Explicitly use the original TRL implementation, not Unsloth's patched version.
 GRPOTrainer = _OriginalGRPOTrainer
 
 from math_rl_tuning.config import Config
 from math_rl_tuning.model import (
     merge_adapter,
-    load_model_and_tokenizer,
     load_unsloth_model,
     patch_vocab_size,
 )
 from math_rl_tuning.data import prepare_grpo_data
 from math_rl_tuning.rewards import build_reward_functions
-from math_rl_tuning.utils import patch_colab_fileno, is_colab, is_bf16_supported
+from math_rl_tuning.utils import patch_colab_fileno, is_colab, is_bf16_supported, copy_to_drive
 
 
 class RewardTracker:
-    """Wraps a reward function to capture return values for logging."""
+    """
+    Wraps a reward function to capture return values for logging.
+
+    TRL calls reward functions internally and doesn't expose the raw scores.
+    By wrapping each function, we intercept the return values so
+    RewardLoggingCallback can log per-function means to WandB.
+    """
 
     def __init__(self, func):
         self._func = func
@@ -134,51 +135,31 @@ def run_grpo_training(
     grpo_dataset: Optional[Dataset] = None,
     save_to_drive: bool = False,
     checkpoint_path: Optional[str] = None,
-    skip_sft_merge: bool = False,
 ) -> Tuple:
-    """Run the full GRPO pipeline.
-
-    Args:
-        skip_sft_merge: If True, skip Phase 1 (SFT adapter merge) and load
-            the instruct model (cfg.model.instruct_name) directly. Use this
-            for GRPO training starting from the instruct model instead of SFT.
-    """
+    """Run the full GRPO pipeline."""
+    sft_path = sft_adapter_path or cfg.paths.sft_output_dir
     patch_colab_fileno()
 
-    if not skip_sft_merge:
-        # --- Phase 1: Merge SFT adapter ---
-        print("=" * 60)
-        print("PHASE 1: Merge SFT Adapter")
-        print("=" * 60)
-        sft_path = sft_adapter_path or cfg.paths.sft_output_dir
-        merged_path = merge_adapter(cfg, adapter_path=sft_path)
-        patch_vocab_size(merged_path)
-        model_to_load = merged_path
-    else:
-        # --- Phase 1: Skipped — start from instruct model directly ---
-        print("=" * 60)
-        print("PHASE 1: Skipped (starting from instruct model)")
-        print("=" * 60)
-        model_to_load = cfg.model.instruct_name
-        print(f"Will load instruct model: {model_to_load}")
+    # --- Phase 1: Merge SFT adapter ---
+    print("=" * 60)
+    print("PHASE 1: Merge SFT Adapter")
+    print("=" * 60)
+    merged_path = merge_adapter(cfg, adapter_path=sft_path)
+    patch_vocab_size(merged_path)
 
     # --- Phase 2: Load for RL ---
     print("\n" + "=" * 60)
     print("PHASE 2: Load Model for RL")
     print("=" * 60)
     gc = cfg.grpo_training
+    # Total sequence length = prompt + completion.
+    # Unsloth uses a fixed-size KV cache, so it needs the combined length upfront.
     grpo_seq_len = gc.max_prompt_length + gc.max_completion_length
-    if HAS_UNSLOTH:
-        print("Using Unsloth FastLanguageModel")
-        model, tokenizer = load_unsloth_model(
-            cfg, model_path=model_to_load, for_training=True,
-            max_seq_length=grpo_seq_len,
-        )
-    else:
-        print("Unsloth not available — using standard HuggingFace")
-        model, tokenizer = load_model_and_tokenizer(
-            cfg, stage="grpo", model_path=model_to_load
-        )
+    print("Using Unsloth FastLanguageModel")
+    model, tokenizer = load_unsloth_model(
+        cfg, model_path=merged_path, for_training=True,
+        max_seq_length=grpo_seq_len,
+    )
 
     # Ensure warnings_issued exists (TRL's GRPOTrainer uses it as a dict)
     if not hasattr(model, "warnings_issued"):
@@ -228,21 +209,6 @@ def run_grpo_training(
     print(f"RL model saved to: {save_dir}")
 
     if save_to_drive:
-        _copy_to_drive(save_dir, cfg)
+        copy_to_drive(save_dir, "grpo", cfg)
 
     return trainer, model, tokenizer, reward_callback
-
-
-def _copy_to_drive(source_dir: str, cfg: Config):
-    """Copy saved model to Google Drive (Colab only)."""
-    if not is_colab():
-        return
-    from math_rl_tuning.utils import mount_google_drive
-    mount_google_drive(cfg.paths.drive_mount)
-    dest = os.path.join(cfg.paths.drive_save_dir, "grpo")
-    if os.path.exists(dest):
-        print(f"Drive destination already exists: {dest}. Skipping.")
-        return
-    os.makedirs(os.path.dirname(dest), exist_ok=True)
-    shutil.copytree(source_dir, dest)
-    print(f"Copied to Drive: {dest}")

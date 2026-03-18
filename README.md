@@ -38,12 +38,7 @@ math-rl-tuning/
 ├── notebooks/
 │   ├── 01_sft_training.ipynb     # SFT training (run on Colab)
 │   ├── 02_grpo_training.ipynb    # GRPO training (run on Colab)
-│   ├── 03_evaluation.ipynb       # Evaluation and comparison
-│   └── 04_inference.ipynb        # Interactive inference
-├── scripts/
-│   ├── run_sft.py                # CLI: run SFT training
-│   ├── run_grpo.py               # CLI: run GRPO training
-│   └── run_eval.py               # CLI: run evaluation
+│   └── 03_evaluation.ipynb       # Evaluation and comparison
 ├── setup.py
 ├── requirements.txt
 ├── MANIFEST.in
@@ -75,29 +70,8 @@ Open any notebook from `notebooks/` in Colab. Each notebook:
 | 01 SFT Training | T4 (16GB) | A100 (40GB) |
 | 02 GRPO Training | A100 (40GB) | A100 (80GB) |
 | 03 Evaluation | T4 (16GB) | T4 (16GB) |
-| 04 Inference | T4 (16GB) | T4 (16GB) |
 
-### 3. Run from Command Line
-
-CLI scripts are provided in `scripts/` for running each stage:
-
-```bash
-# SFT training
-python scripts/run_sft.py
-python scripts/run_sft.py --epochs 2 --batch-size 8 --no-wandb
-
-# GRPO training (requires SFT adapter from step above)
-python scripts/run_grpo.py --sft-adapter ./outputs/sft
-python scripts/run_grpo.py --sft-adapter ./outputs/sft --sample-size 1200
-
-# Evaluation
-python scripts/run_eval.py --sft-adapter ./outputs/sft
-python scripts/run_eval.py --sft-adapter ./outputs/sft --rl-adapter ./outputs/grpo --num-samples 100
-```
-
-All scripts accept `--config path/to/custom.yaml` and `--hf-token` / `--wandb-key`.
-
-### 4. Run from Python
+### 3. Run from Python
 
 ```python
 from math_rl_tuning.config import load_config

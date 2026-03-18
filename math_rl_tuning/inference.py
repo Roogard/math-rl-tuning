@@ -4,14 +4,11 @@ Inference module.
 Provides:
   - Streaming text generation (threaded, for interactive use)
   - Simple one-shot generation
-  - Batch generation for test sets
 """
 
 import threading
 import torch
-from typing import Optional
 
-from math_rl_tuning.config import Config
 from math_rl_tuning.utils import extract_boxed
 
 
@@ -77,7 +74,11 @@ def generate_stream(
         pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
     )
 
-    # Run generation in background thread with no gradient tracking
+    # TextIteratorStreamer requires generation to run in a background thread.
+    # The streamer acts as a queue: the generation thread pushes tokens into it,
+    # and the main thread pulls them out with `for token in streamer`.
+    # Running in the main thread would deadlock (generate() blocks until done,
+    # but streamer needs the main thread to consume tokens to avoid buffer overflow).
     def _generate_no_grad():
         with torch.no_grad():
             model.generate(**generation_kwargs)
@@ -145,69 +146,3 @@ def generate(
     new_tokens = output_ids[0][inputs["input_ids"].shape[1]:]
     return tokenizer.decode(new_tokens, skip_special_tokens=True)
 
-
-# ---------------------------------------------------------------------------
-# Generation from config
-# ---------------------------------------------------------------------------
-
-def generate_from_config(
-    question: str,
-    model,
-    tokenizer,
-    cfg: Config,
-    stream: bool = False,
-) -> str:
-    """
-    Generate using parameters from the config's inference section.
-
-    Args:
-        question: The math question.
-        model: The loaded model.
-        tokenizer: The tokenizer.
-        cfg: Project configuration.
-        stream: If True, use streaming generation with live printing.
-
-    Returns:
-        The generated response text.
-    """
-    ic = cfg.inference
-
-    if stream:
-        return generate_stream(
-            question=question,
-            model=model,
-            tokenizer=tokenizer,
-            max_new_tokens=ic.max_new_tokens,
-            temperature=ic.temperature,
-            top_p=ic.top_p,
-            do_sample=ic.do_sample,
-        )
-    else:
-        return generate(
-            question=question,
-            model=model,
-            tokenizer=tokenizer,
-            max_new_tokens=ic.max_new_tokens,
-            temperature=ic.temperature,
-            top_p=ic.top_p,
-            do_sample=ic.do_sample,
-        )
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def extract_final_answer(response: str) -> Optional[str]:
-    r"""
-    Extract the final answer from a model response.
-
-    Tries ``\boxed{}`` first, then falls back to the last line.
-    """
-    boxed = extract_boxed(response)
-    if boxed:
-        return boxed
-
-    # Fallback: last non-empty line
-    lines = [l.strip() for l in response.strip().split("\n") if l.strip()]
-    return lines[-1] if lines else None

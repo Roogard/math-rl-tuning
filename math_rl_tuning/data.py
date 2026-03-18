@@ -56,6 +56,10 @@ def balanced_split(
     Sample up to *train_per_source* training rows and *val_per_source*
     validation rows from each source group.
 
+    Balanced splitting prevents larger sources (like cn_k12 with 100k+ examples)
+    from dominating training. Without capping, the model would see disproportionately
+    more of one problem style and overfit to its formatting conventions.
+
     Per-source caps can be set via *per_source_overrides* dict, which
     maps source names to their specific training cap. Sources not in
     the dict use the global *train_per_source* default.
@@ -144,9 +148,11 @@ def inject_system_prompt(example: dict, system_prompt: str) -> dict:
     """
     Prepend a system message to the example's ``messages`` field.
 
+    We inject the system prompt here rather than hard-coding it into the dataset
+    so it can be changed via config without reprocessing the data.
     Uses a proper ``system`` role so the tokenizer's chat template places
     the instruction in the system slot (supported by Qwen2.5 and Llama-3).
-    Skips if a system message is already present.
+    Skips if a system message is already present (idempotent).
     """
     msgs = example["messages"]
     if not msgs or msgs[0]["role"] != "system":
@@ -157,37 +163,6 @@ def inject_system_prompt(example: dict, system_prompt: str) -> dict:
 # ---------------------------------------------------------------------------
 # GRPO prompt formatting
 # ---------------------------------------------------------------------------
-
-def _extract_gsm8k_answer(text: str) -> str:
-    """Extract the numerical answer from GSM8K format (#### marker)."""
-    if "####" not in text:
-        return text.strip()
-    return text.split("####")[-1].strip()
-
-
-def format_grpo_prompt_gsm8k(
-    example: dict,
-    system_prompt: str,
-) -> dict:
-    """
-    Format a GSM8K example for GRPO training.
-
-    Returns a dict with:
-      - ``prompt``: list of message dicts (TRL applies chat template)
-      - ``answer``: the extracted ground-truth numerical answer
-
-    NOTE: prompt MUST be message dicts, not a pre-rendered string.
-    TRL's GRPOTrainer applies the chat template internally.
-    Passing a pre-rendered string causes double-templating issues.
-    """
-    return {
-        "prompt": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": example["question"]},
-        ],
-        "answer": _extract_gsm8k_answer(example["answer"]),
-    }
-
 
 def format_grpo_prompt_numina(
     example: dict,
@@ -282,8 +257,8 @@ def prepare_grpo_data(cfg: Config, tokenizer=None):
     """
     End-to-end data preparation for GRPO training.
 
-    Loads GSM8K (default) or NuminaMath depending on
-    ``cfg.dataset.grpo_dataset_name``.
+    Loads NuminaMath-CoT using the same sources as SFT,
+    keeping the full pipeline consistent on the same data distribution.
 
     Returns a shuffled HuggingFace ``Dataset`` of size
     ``cfg.grpo_training.grpo_sample_size`` with ``prompt`` and ``answer``
@@ -291,50 +266,28 @@ def prepare_grpo_data(cfg: Config, tokenizer=None):
     """
     dc = cfg.dataset
     gc = cfg.grpo_training
-    grpo_ds_name = getattr(dc, "grpo_dataset_name", "openai/gsm8k")
-
-    if "gsm8k" in grpo_ds_name.lower():
-        return _prepare_grpo_gsm8k(dc, gc)
-    else:
-        return _prepare_grpo_numina(dc, gc)
-
-
-def _prepare_grpo_gsm8k(dc, gc):
-    """Load and format GSM8K for GRPO training."""
-    print(f"Loading GSM8K dataset for GRPO...")
-    ds = load_dataset(dc.grpo_dataset_name, "main")
-    train_ds = ds["train"]
-
-    print(f"GRPO candidate pool: {len(train_ds)} examples")
-    print("Formatting prompts...")
-
-    dataset = train_ds.map(
-        lambda ex: format_grpo_prompt_gsm8k(ex, dc.grpo_system_prompt),
-        remove_columns=train_ds.column_names,
-    )
-
-    dataset = dataset.shuffle(seed=dc.random_state).select(
-        range(min(gc.grpo_sample_size, len(dataset)))
-    )
-
-    print(f"GRPO dataset size: {len(dataset)}")
-    return dataset
+    return _prepare_grpo_numina(dc, gc)
 
 
 def _prepare_grpo_numina(dc, gc):
-    """Load and format NuminaMath-CoT for GRPO training (fallback)."""
+    """Load and format NuminaMath-CoT for GRPO training.
+
+    Uses the same sft_keep_sources as SFT so both stages train on an
+    identical data distribution.
+    """
     print("Loading NuminaMath dataset for GRPO...")
     ds = load_numina_dataset(dc.name)
 
     train_df = ds["train"].to_pandas()
-    train_df = filter_sources(train_df, dc.grpo_drop_sources)
+    # Keep exactly the same sources as SFT — consistent distribution across pipeline
+    train_df = keep_sources(train_df, dc.sft_keep_sources)
     train_ds = Dataset.from_pandas(train_df)
 
     print(f"GRPO candidate pool: {len(train_ds)} examples")
     print("Formatting prompts...")
 
     dataset = train_ds.map(
-        lambda ex: format_grpo_prompt_numina(ex, dc.grpo_system_prompt),
+        lambda ex: format_grpo_prompt_numina(ex, dc.system_prompt),
         remove_columns=train_ds.column_names,
     )
 
@@ -344,55 +297,6 @@ def _prepare_grpo_numina(dc, gc):
 
     print(f"GRPO dataset size: {len(dataset)}")
     return dataset
-
-
-# ---------------------------------------------------------------------------
-# High-level convenience: prepare eval data from SFT training sources
-# ---------------------------------------------------------------------------
-
-def prepare_eval_from_sft_sources(cfg: Config) -> Dataset:
-    """
-    Build an evaluation dataset from the same sources used in SFT training.
-
-    Instead of the NuminaMath test split (which can be hard), this function
-    uses the validation portion held out during ``balanced_split()`` — same
-    sources and balance as SFT training data, but different examples.
-
-    This typically yields higher (more interpretable) accuracy numbers because
-    the distribution matches what the model was trained on.
-
-    Returns a HuggingFace Dataset with 'problem' and 'solution' columns.
-    """
-    dc = cfg.dataset
-
-    print("Loading NuminaMath train split for in-distribution eval...")
-    ds = load_numina_dataset(dc.name)
-    df = ds["train"].to_pandas()
-
-    # Filter to the same sources as SFT training
-    df = keep_sources(df, dc.sft_keep_sources)
-    print(f"Sources: {sorted(df['source'].unique())}")
-
-    # Reproduce the same balanced split as SFT training to get the val portion
-    _, val_df = balanced_split(
-        df,
-        train_per_source=dc.train_per_source,
-        val_per_source=dc.val_per_source,
-        random_state=dc.random_state,
-        per_source_overrides=getattr(dc, "train_per_source_overrides", None),
-    )
-
-    print(f"In-distribution eval set size: {len(val_df)}")
-    print(f"Sources: {sorted(val_df['source'].unique())}")
-
-    if len(val_df) < cfg.evaluation.num_samples:
-        print(
-            f"WARNING: Val set ({len(val_df)} examples) is smaller than "
-            f"evaluation.num_samples ({cfg.evaluation.num_samples}). "
-            f"All {len(val_df)} examples will be used."
-        )
-
-    return Dataset.from_pandas(val_df)
 
 
 # ---------------------------------------------------------------------------

@@ -46,8 +46,6 @@ class PathsConfig:
     sft_output_dir: str = "./outputs/sft"
     sft_merged_dir: str = "./outputs/sft_merged"
     grpo_output_dir: str = "./outputs/grpo"
-    grpo_from_sft_output_dir: str = "./outputs/grpo_from_sft"
-    grpo_from_instruct_output_dir: str = "./outputs/grpo_from_instruct"
     eval_output_dir: str = "./outputs/eval"
     drive_mount: str = "/content/drive"
     drive_save_dir: str = "/content/drive/MyDrive/math-rl-tuning"
@@ -56,26 +54,33 @@ class PathsConfig:
 @dataclass
 class ModelConfig:
     name: str = "Qwen/Qwen2.5-Math-7B"
-    instruct_name: str = "Qwen/Qwen2.5-Math-7B-Instruct"
     max_seq_length: int = 2048
 
 
 @dataclass
 class QuantizationConfig:
     load_in_4bit: bool = True
-    bnb_4bit_quant_type: str = "nf4"
-    bnb_4bit_compute_dtype: str = "bfloat16"
-    bnb_4bit_use_double_quant: bool = True
+    bnb_4bit_quant_type: str = "nf4"          # NF4 (NormalFloat4) is theoretically optimal
+                                               # for weights that follow a normal distribution —
+                                               # which most LLM weights do after pretraining.
+    bnb_4bit_compute_dtype: str = "bfloat16"  # Upcast to bf16 for the matrix multiplications
+                                               # so quantization error doesn't compound during forward pass.
+    bnb_4bit_use_double_quant: bool = True     # Quantizes the quantization constants themselves,
+                                               # saving ~0.4 bits/parameter with negligible accuracy loss.
 
 
 @dataclass
 class LoRASubConfig:
-    r: int = 32
-    alpha: int = 64
-    dropout: float = 0.0
-    bias: str = "none"
+    r: int = 32           # Rank: controls how many parameters are trainable.
+                          # r=32 is a sweet spot for 7B models — enough capacity
+                          # without the memory cost of full fine-tuning.
+    alpha: int = 64       # Scaling factor; effective learning rate = lr * (alpha / r).
+                          # alpha = 2*r is a common default that keeps LoRA updates
+                          # at roughly the same scale as standard fine-tuning.
+    dropout: float = 0.0  # Dropout on LoRA layers; 0.0 is fine for small adapters.
+    bias: str = "none"    # Don't train bias terms — they add little with LoRA.
     task_type: str = "CAUSAL_LM"
-    target_modules: Any = "all-linear"  # str or list[str]
+    target_modules: Any = "all-linear"  # Apply LoRA to all linear layers; str or list[str]
 
 
 @dataclass
@@ -90,39 +95,43 @@ class LoRAConfig:
 
 @dataclass
 class DatasetConfig:
-    grpo_dataset_name: str = "openai/gsm8k"
     name: str = "AI-MO/NuminaMath-CoT"
     sft_keep_sources: List[str] = field(default_factory=lambda: ["gsm8k", "math", "cn_k12", "orca_math", "synthetic_math"])
     test_drop_sources: List[str] = field(default_factory=list)
-    grpo_drop_sources: List[str] = field(default_factory=list)
     train_per_source: int = 12000
     train_per_source_overrides: Dict[str, int] = field(default_factory=dict)
     val_per_source: int = 500
     random_state: int = 42
     system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}."
-    grpo_system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}."
 
 
 @dataclass
 class SFTTrainingConfig:
-    num_train_epochs: int = 1
+    num_train_epochs: int = 1       # One epoch is usually enough for SFT on a large curated dataset —
+                                    # more epochs risk overfitting on the training format.
     per_device_train_batch_size: int = 4
     per_device_eval_batch_size: int = 2
     gradient_accumulation_steps: int = 4
-    gradient_checkpointing: bool = True
+    gradient_checkpointing: bool = True  # Recomputes activations during backward pass instead of
+                                         # storing them — trades compute for memory, enabling larger
+                                         # effective batch sizes on single-GPU setups.
     fp16: bool = False
-    bf16: bool = False
+    bf16: bool = False              # Both left False so the trainer auto-detects based on GPU capability.
     learning_rate: float = 2e-5
     lr_scheduler_type: str = "cosine"
     warmup_ratio: float = 0.1
     logging_steps: int = 25
     eval_strategy: str = "steps"
-    neftune_noise_alpha: Optional[float] = None
+    neftune_noise_alpha: Optional[float] = None  # NEFTune: adds noise to embeddings during training
+                                                  # to improve generalization. Disabled by default.
     eval_steps: int = 100
     max_length: int = 2048
     dataset_text_field: str = "messages"
-    completion_only_loss: bool = True
-    packing: bool = False
+    completion_only_loss: bool = True  # Only compute loss on the assistant's response tokens, NOT the
+                                       # prompt (question + system prompt). Without this, the model
+                                       # wastes capacity learning to predict the question itself.
+    packing: bool = False              # Packs multiple short examples into one sequence up to max_length
+                                       # to avoid wasted padding. Efficient but can mix examples.
     dataset_num_proc: int = 24
     report_to: str = "wandb"
     wandb_project: str = "AI-MONuminaMath"
@@ -134,30 +143,35 @@ class SFTTrainingConfig:
 
 @dataclass
 class GRPOTrainingConfig:
-    learning_rate: float = 5e-6
+    learning_rate: float = 5e-6  # Much lower than SFT — RL training is noisy,
+                                 # a too-large LR causes policy collapse.
     adam_beta1: float = 0.9
-    adam_beta2: float = 0.99
+    adam_beta2: float = 0.99     # Higher than default (0.999) for better gradient tracking
+                                 # in the noisy RL setting (from DeepSeek-R1 recipe).
     warmup_ratio: float = 0.1
     weight_decay: float = 0.1
     lr_scheduler_type: str = "cosine"
     optim: str = "paged_adamw_8bit"
     per_device_train_batch_size: int = 1
     gradient_accumulation_steps: int = 4
-    num_generations: int = 6
+    num_generations: int = 6     # How many completions to sample per prompt.
+                                 # GRPO computes advantages relative to the group mean reward —
+                                 # more generations = more stable advantage estimates,
+                                 # but linearly increases VRAM usage.
     max_prompt_length: int = 512
     max_completion_length: int = 256
     num_train_epochs: int = 3
     report_to: str = "wandb"
-    use_vllm: bool = False
-    beta: float = 0.01
+    beta: float = 0.01           # KL penalty coefficient. Prevents the RL policy from
+                                 # drifting too far from the SFT reference model —
+                                 # without this, the model could learn to "game" rewards
+                                 # by generating gibberish that happens to match answers.
     grpo_sample_size: int = 7400
     max_grad_norm: float = 0.1
     logging_steps: int = 1
     save_strategy: str = "steps"
     save_steps: int = 50
     save_total_limit: int = 3
-    use_unsloth: bool = False
-    gpu_memory_utilization: float = 0.5
 
 
 @dataclass
@@ -173,18 +187,9 @@ class RewardsConfig:
 class EvaluationConfig:
     num_samples: int = 100
     max_new_tokens: int = 1024
-    greedy: bool = True
     system_prompt: str = "Please reason step by step, and put your final answer within \\boxed{}."
     batch_size: int = 4
     eval_keep_sources: List[str] = field(default_factory=list)
-
-
-@dataclass
-class InferenceConfig:
-    max_new_tokens: int = 1024
-    temperature: float = 0.7
-    top_p: float = 0.9
-    do_sample: bool = True
 
 
 # ---------------------------------------------------------------------------
@@ -202,7 +207,6 @@ class Config:
     grpo_training: GRPOTrainingConfig = field(default_factory=GRPOTrainingConfig)
     rewards: RewardsConfig = field(default_factory=RewardsConfig)
     evaluation: EvaluationConfig = field(default_factory=EvaluationConfig)
-    inference: InferenceConfig = field(default_factory=InferenceConfig)
 
 
 def _apply_dict_to_dataclass(dc, d: dict):

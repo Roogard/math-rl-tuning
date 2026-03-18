@@ -47,7 +47,7 @@
 
 **What**: Prove that GRPO improved the model's math reasoning, with numbers to back it up.
 
-**Tech involved**: `run_eval.py` · GSM8K test set (1,319 problems) · greedy decoding · latex2sympy2 symbolic equality
+**Tech involved**: `evaluation.py` · NuminaMath-CoT test set · greedy decoding · math-verify symbolic equality
 
 **Tasks**:
 - [ ] Record base model (no training) accuracy on GSM8K test set — this is the "before" baseline

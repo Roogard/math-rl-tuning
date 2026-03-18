@@ -1,43 +1,27 @@
-# =============================================================================
-# Math RL Tuning — Default Configuration
-# =============================================================================
-# Override any value by passing a custom YAML or by setting environment variables.
 
-# --- Paths ---
+
+# models saved in google drive
 paths:
-  # Where to save SFT training outputs (checkpoints, logs)
   sft_output_dir: "./outputs/sft"
-  # Where to save the final merged SFT model before RL
   sft_merged_dir: "./outputs/sft_merged"
-  # Where to save GRPO/RL training outputs
   grpo_output_dir: "./outputs/grpo"
-  # GRPO trained on top of SFT model
-  grpo_from_sft_output_dir: "./outputs/grpo_from_sft"
-  # GRPO trained on top of instruct model (no SFT step)
-  grpo_from_instruct_output_dir: "./outputs/grpo_from_instruct"
-  # Where to save evaluation results (JSON/CSV)
   eval_output_dir: "./outputs/eval"
-  # Google Drive mount point (used only in Colab)
   drive_mount: "/content/drive"
-  # Google Drive save directory (used only in Colab)
   drive_save_dir: "/content/drive/MyDrive/math-rl-tuning"
 
-# --- Base Model ---
 model:
   name: "Qwen/Qwen2.5-Math-7B"
-  instruct_name: "Qwen/Qwen2.5-Math-7B-Instruct"
   max_seq_length: 2048
 
-# --- Quantization (QLoRA / BitsAndBytes) ---
+# quantization to speed up training and reduce GPU usage since compute is a bottleneck in this project
 quantization:
   load_in_4bit: true
   bnb_4bit_quant_type: "nf4"
   bnb_4bit_compute_dtype: "bfloat16"
   bnb_4bit_use_double_quant: true
 
-# --- LoRA ---
+#lora config since full fine-tuning is unecessary and expensive. lets us train far less parameters and still be accurace
 lora:
-  # SFT LoRA config
   sft:
     r: 32
     alpha: 64
@@ -52,8 +36,6 @@ lora:
       - "gate_proj"
       - "up_proj"
       - "down_proj"
-  # GRPO/RL LoRA config (fresh adapter on top of merged SFT)
-  # Matches official Unsloth GRPO notebook: r=32, alpha=r
   grpo:
     r: 32
     alpha: 32
@@ -68,13 +50,10 @@ lora:
       - "up_proj"
       - "down_proj"
 
-# --- Dataset ---
 dataset:
-  # GRPO dataset: GSM8K (grade school math — easier, better learning signal)
-  grpo_dataset_name: "openai/gsm8k"
-  # SFT dataset (unchanged)
+  # Dataset used for both SFT and GRPO — same sources throughout the full pipeline
   name: "AI-MO/NuminaMath-CoT"
-  # Sources to KEEP for SFT training (cleaner, well-formatted data)
+  # Sources to KEEP for both SFT and GRPO training (cleaner, well-formatted data)
   sft_keep_sources:
     - "gsm8k"
     - "math"
@@ -88,22 +67,12 @@ dataset:
   test_drop_sources:
     - "synthetic_math"
     - "synthetic_amc"
-  # Sources to DROP from GRPO train set (only used if grpo_dataset_name is NuminaMath)
-  grpo_drop_sources:
-    - "olympiads"
-    - "aops_forum"
-    - "cn_k12"
-    - "orca_math"
-    - "synthetic_math"
-    - "amc_aime"
-    - "synthetic_amc"
   train_per_source: 12000
   # Per-source overrides (empty = use train_per_source for all)
   train_per_source_overrides: {}
   val_per_source: 500
   random_state: 42
   system_prompt: "Please reason step by step, and put your final answer within \\boxed{}."
-  grpo_system_prompt: "Please reason step by step, and put your final answer within \\boxed{}."
 
 # --- SFT Training ---
 sft_training:
@@ -151,7 +120,6 @@ grpo_training:
   max_completion_length: 2048
   num_train_epochs: 1
   report_to: "wandb"
-  use_vllm: false
   beta: 0.01
   grpo_sample_size: 3000
   max_grad_norm: 0.3
@@ -159,9 +127,6 @@ grpo_training:
   save_strategy: "steps"
   save_steps: 50
   save_total_limit: 3
-  # Unsloth-specific
-  use_unsloth: false
-  gpu_memory_utilization: 0.5
 
 # --- Reward Function ---
 rewards:
@@ -180,7 +145,6 @@ rewards:
 evaluation:
   num_samples: 300
   max_new_tokens: 2048
-  greedy: true
   system_prompt: "Please reason step by step, and put your final answer within \\boxed{}."
   batch_size: 16  # Increase to 8-16 on A100 (40GB) for faster eval
   # Only evaluate on sources the model was trained on (set to [] for all sources)
@@ -194,9 +158,3 @@ evaluation:
     - "aops_forum"
     - "amc_aime"
 
-# --- Inference ---
-inference:
-  max_new_tokens: 1024
-  temperature: 0.7
-  top_p: 0.9
-  do_sample: true

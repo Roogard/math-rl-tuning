@@ -19,6 +19,11 @@ from math_rl_tuning.data import prepare_sft_data
 from math_rl_tuning.utils import clean_memory, copy_to_drive
 
 
+"""
+Backend for SFT notebook. Pain point of slow training talked about in config. 
+"""
+
+
 # ---------------------------------------------------------------------------
 # Tokenizer setup
 # ---------------------------------------------------------------------------

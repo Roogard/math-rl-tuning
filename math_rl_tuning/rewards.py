@@ -18,6 +18,13 @@ Reward design:
                       Zero penalty (not -0.5) so it's aspirational, not punishing.
 """
 
+
+"""
+I also used to give reward for partial credit, like if a model got the right answer
+anywhere it'd get credit. But at the end of the day, this just muddied the reward signal and
+ended up spamming answers at one point early on. 
+"""
+
 import re
 
 from math_rl_tuning.config import RewardsConfig

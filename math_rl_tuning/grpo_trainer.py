@@ -9,27 +9,20 @@ Simplified pipeline matching the official Unsloth GRPO notebook:
 """
 
 import os
-import sys
-import types
 from collections import defaultdict
 from typing import Optional, Tuple
 
-# Stub out optional TRL dependencies that break with newer transformers.
-# TRL's lazy module loader imports these transitively even though GRPO
-# doesn't use them. llm_blender is incompatible with transformers>=4.45
-# (removed TRANSFORMERS_CACHE), so we register a dummy module.
-for _mod in ("llm_blender",):
-    if _mod not in sys.modules:
-        sys.modules[_mod] = types.ModuleType(_mod)
-
-# Import Unsloth FIRST. Unsloth patches trl.GRPOTrainer in-place, so the
-# subsequent `from trl import GRPOTrainer` returns Unsloth's implementation
-# without triggering TRL's lazy module loader (which requires mergekit in
-# newer TRL versions, causing a pydantic/torch schema generation error).
-from unsloth import FastLanguageModel
-from trl import GRPOTrainer, GRPOConfig
+# Import TRL BEFORE unsloth to avoid TRL's lazy module loader pulling in
+# broken optional deps (llm_blender). Unsloth's import monkey-patches
+# trl.GRPOTrainer, but we save the original first.
+from trl import GRPOTrainer as _OriginalGRPOTrainer, GRPOConfig
 from transformers import TrainerCallback
 from datasets import Dataset
+
+from unsloth import FastLanguageModel
+
+# Use the original TRL GRPOTrainer (Unsloth's patched version had bugs)
+GRPOTrainer = _OriginalGRPOTrainer
 
 from math_rl_tuning.config import Config
 from math_rl_tuning.model import (

@@ -17,6 +17,16 @@ from datasets import Dataset, load_dataset
 from math_rl_tuning.config import Config, DatasetConfig
 from math_rl_tuning.utils import extract_boxed
 
+"""
+Main thing of note here is how the boxed answer extraction works.
+When I did this project for a class project, I didn't extract from boxed properly,
+which ended up giving me 0 accuracy for the presentation in class.
+
+That day I learned how important it was to ensure a good environment before even
+touching RL. If the base model can't get anything right then there's no point in training.
+"""
+
+
 
 # ---------------------------------------------------------------------------
 # Core dataset loading

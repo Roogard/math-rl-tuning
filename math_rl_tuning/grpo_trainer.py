@@ -8,21 +8,22 @@ Simplified pipeline matching the official Unsloth GRPO notebook:
   4. Save
 """
 
+"""
+Works as a backend for the GRPO notebook
+
+The pain here is the imports between TRL and Unsloth, caused lots of pain and suffering and debugging.
+The lesson at the end of the day here is figure out your imports and environment before you start coding, 
+especially with RL where training can be very slow and you don't want to waste time on import bugs.
+"""
+
 import os
 from collections import defaultdict
 from typing import Optional, Tuple
 
-# Import TRL BEFORE unsloth to avoid TRL's lazy module loader pulling in
-# broken optional deps (llm_blender). Unsloth's import monkey-patches
-# trl.GRPOTrainer, but we save the original first.
-from trl import GRPOTrainer as _OriginalGRPOTrainer, GRPOConfig
+from trl import GRPOTrainer, GRPOConfig
 from transformers import TrainerCallback
 from datasets import Dataset
-
 from unsloth import FastLanguageModel
-
-# Use the original TRL GRPOTrainer (Unsloth's patched version had bugs)
-GRPOTrainer = _OriginalGRPOTrainer
 
 from math_rl_tuning.config import Config
 from math_rl_tuning.model import (

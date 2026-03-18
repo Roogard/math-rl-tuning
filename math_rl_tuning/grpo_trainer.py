@@ -3,7 +3,7 @@ GRPO (Group Relative Policy Optimization) trainer.
 
 Simplified pipeline matching the official Unsloth GRPO notebook:
   1. Merge the SFT adapter into the base model
-  2. Load with Unsloth FastLanguageModel (or standard HF fallback)
+  2. Load with Unsloth FastLanguageModel
   3. Train with TRL GRPOTrainer
   4. Save
 """
@@ -12,20 +12,14 @@ import os
 from collections import defaultdict
 from typing import Optional, Tuple
 
-# Import TRL's GRPOTrainer BEFORE unsloth to save the original class.
-# Unsloth monkey-patches trl.GRPOTrainer with its own UnslothGRPOTrainer,
-# which has a known tensor-shape bug in compute_loss (completion_mask size mismatch).
-# By capturing the reference before the monkey-patch, we get Unsloth's fast model
-# loading while still using TRL's correct training logic.
-from trl import GRPOTrainer as _OriginalGRPOTrainer, GRPOConfig
+# Import Unsloth FIRST. Unsloth patches trl.GRPOTrainer in-place, so the
+# subsequent `from trl import GRPOTrainer` returns Unsloth's implementation
+# without triggering TRL's lazy module loader (which requires mergekit in
+# newer TRL versions, causing a pydantic/torch schema generation error).
+from unsloth import FastLanguageModel
+from trl import GRPOTrainer, GRPOConfig
 from transformers import TrainerCallback
 from datasets import Dataset
-
-# This triggers the monkey-patch, but we've already saved the original.
-from unsloth import FastLanguageModel
-
-# Explicitly use the original TRL implementation, not Unsloth's patched version.
-GRPOTrainer = _OriginalGRPOTrainer
 
 from math_rl_tuning.config import Config
 from math_rl_tuning.model import (
@@ -155,7 +149,6 @@ def run_grpo_training(
     # Total sequence length = prompt + completion.
     # Unsloth uses a fixed-size KV cache, so it needs the combined length upfront.
     grpo_seq_len = gc.max_prompt_length + gc.max_completion_length
-    print("Using Unsloth FastLanguageModel")
     model, tokenizer = load_unsloth_model(
         cfg, model_path=merged_path, for_training=True,
         max_seq_length=grpo_seq_len,

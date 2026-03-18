@@ -51,9 +51,8 @@ lora:
       - "down_proj"
 
 dataset:
-  # Dataset used for both SFT and GRPO — same sources throughout the full pipeline
+  # sub datasets used from full math dataset
   name: "AI-MO/NuminaMath-CoT"
-  # Sources to KEEP for both SFT and GRPO training (cleaner, well-formatted data)
   sft_keep_sources:
     - "gsm8k"
     - "math"

@@ -9,8 +9,18 @@ Simplified pipeline matching the official Unsloth GRPO notebook:
 """
 
 import os
+import sys
+import types
 from collections import defaultdict
 from typing import Optional, Tuple
+
+# Stub out optional TRL dependencies that break with newer transformers.
+# TRL's lazy module loader imports these transitively even though GRPO
+# doesn't use them. llm_blender is incompatible with transformers>=4.45
+# (removed TRANSFORMERS_CACHE), so we register a dummy module.
+for _mod in ("llm_blender",):
+    if _mod not in sys.modules:
+        sys.modules[_mod] = types.ModuleType(_mod)
 
 # Import Unsloth FIRST. Unsloth patches trl.GRPOTrainer in-place, so the
 # subsequent `from trl import GRPOTrainer` returns Unsloth's implementation

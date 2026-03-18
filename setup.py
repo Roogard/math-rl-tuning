@@ -21,6 +21,7 @@ setup(
         "accelerate>=1.4.0",
         "peft>=0.7.1",            # LoRA / QLoRA adapter management
         "trl>=0.24.0",            # SFTTrainer + GRPOTrainer
+        "llm_blender",            # Required by TRL's lazy loader for grpo_trainer
         "bitsandbytes>=0.45.5",   # 4-bit NF4 quantization (QLoRA)
         "safetensors>=0.4.3",     # Fast, safe model weight serialization
         "sentencepiece>=0.2.0",   # Tokenizer dependency for Qwen2.5

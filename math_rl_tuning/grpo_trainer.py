@@ -158,6 +158,7 @@ def run_grpo_training(
         cfg, model_path=merged_path, for_training=True,
         max_seq_length=grpo_seq_len,
     )
+    model.config.use_cache = False
 
     # Ensure warnings_issued exists (TRL's GRPOTrainer uses it as a dict)
     if not hasattr(model, "warnings_issued"):

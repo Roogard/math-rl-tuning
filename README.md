@@ -1,6 +1,25 @@
 # Math RL Tuning
 
-Fine-tune and RL-train LLMs for mathematical reasoning using **SFT + GRPO**.
+
+## Intro
+
+In the past couple years, many different people, teams, and labs have been trying to see how accurate LLM's can get at math problems. When I saw this, I got really curious about how the process worked. What did the training look like? How can you verify if a math answer is correct? Because of this, I decided to try to make it myself to learn how it works. From the beginning, the plan was to take an LLM, and train it through supervised fine-tuning (SFT) and group relative policy optimization (GRPO). Also as a side note, before this project, I didn't have any experience with agentic engineering, so I wanted to use the project to also learn alot about how to effectively use it. 
+
+## Tech
+
+To do this, I used VSCode and Claude Code to generate a large amount of this project. However, I still coded soem things by hand, as well as made all the decisions, set up the structure, ran the training, and did a large part of the debugging. 
+
+For running SFT and GRPO, I ended up using Google Colab to train the models. This ended up being pretty inefficient, since I had to push to github every time I wanted to make one small change. However, I have the google student plan, so I really wanted to use the free credits.
+
+Also, compute and budget was a large influencer on how this project turned out. I am a broke college TA, so I don't really have access to GPU clusters. I however did spend $70 on google colab credits due to training and testing models. Today, I would have used a lot less money since I understand what's going on in the project a lot more now. 
+
+## Design Decisions (Success and failure included)
+
+This project went through a lot of phases. It started out on 3 different colab notebooks, with all the code inside those notebooks. It was very inefficient, mostly AI generated, and a huge mess. Eventually, I had enough and split all the code into a github repository instead, which ended up being far more efficient. 
+
+After this, my next answer was verifying LLM answers to see if they found the right answer. At first, I had reward functions for if the right answer was in boxed, and if the right answer was there at all. However, this ended up being a terrible design. Beyond this, the actual parser that tried to find if the right answer was in boxed was broken for a while, so I only ever ended up getting the partial answer. Due to this, for a couple days I threw out any kind of training and just ensured that pretty much any answer was capable of being found. The library 
+
+
 
 ## Overview
 
@@ -133,20 +152,6 @@ cfg = load_config("my_custom_config.yaml")
 - Extracts `\boxed{}` answers from both ground truth and predictions
 - Normalizes and compares with string matching + `latex2sympy2` symbolic equality
 - Side-by-side comparison showing where RL improved over SFT
-
-## Authentication
-
-The project needs two API keys:
-
-1. **Hugging Face** — For downloading Mistral-7B. Set via:
-   - Colab secrets: Add `HF_TOKEN` in Colab's Secrets panel
-   - Environment: `export HF_TOKEN=hf_...`
-   - Code: `setup_hf_token("hf_...")`
-
-2. **Weights & Biases** (optional) — For training logging. Set via:
-   - Environment: `export WANDB_API_KEY=...`
-   - Code: `setup_wandb("project-name", key="...")`
-   - Set `report_to: "none"` in config to disable
 
 ## License
 

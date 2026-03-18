@@ -22,10 +22,11 @@ import os
 from collections import defaultdict
 from typing import Optional, Tuple
 
+from unsloth import FastLanguageModel, PatchFastRL
+PatchFastRL("GRPO", FastLanguageModel)
 from trl import GRPOTrainer, GRPOConfig
 from transformers import TrainerCallback
 from datasets import Dataset
-from unsloth import FastLanguageModel
 
 from math_rl_tuning.config import Config
 from math_rl_tuning.model import (

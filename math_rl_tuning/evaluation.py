@@ -232,18 +232,26 @@ def evaluate_adapter(
     cfg: Config,
     num_samples: int = 50,
     model_name: Optional[str] = None,
+    base_model_name: Optional[str] = None,
 ) -> Tuple[pd.DataFrame, float]:
     """
     Load a LoRA adapter, evaluate it, then unload to free VRAM.
 
     Useful for comparing multiple models sequentially.
+
+    Args:
+        base_model_name: Override the base model to load the adapter on top of.
+            Defaults to cfg.model.name. Use this for GRPO adapters that were
+            trained on the merged SFT model or on the instruct model.
     """
     from math_rl_tuning.model import load_adapter
 
     name = model_name or os.path.basename(adapter_path)
     print(f"\nLoading adapter: {adapter_path}")
+    if base_model_name:
+        print(f"  Base model: {base_model_name}")
 
-    model, tokenizer = load_adapter(cfg, adapter_path)
+    model, tokenizer = load_adapter(cfg, adapter_path, base_model_name=base_model_name)
 
     results_df, accuracy = evaluate_model(
         model=model,
@@ -428,8 +436,141 @@ def compare_models(
 
 
 # ---------------------------------------------------------------------------
+# Five-model comparison (Base, Instruct, SFT, GRPO-from-SFT, GRPO-from-Instruct)
+# ---------------------------------------------------------------------------
+
+def compare_five_models(
+    sft_adapter_path: str,
+    grpo_from_sft_adapter_path: str,
+    grpo_from_instruct_adapter_path: str,
+    sft_merged_path: str,
+    test_dataset,
+    cfg: Config,
+    num_samples: int = 300,
+) -> Dict:
+    """
+    Evaluate five models sequentially and return a results dict.
+
+    Models evaluated:
+      1. Base  (cfg.model.name, no adapter)
+      2. Instruct  (cfg.model.instruct_name, no adapter)
+      3. SFT  (base + SFT LoRA adapter)
+      4. GRPO-from-SFT  (merged SFT model + GRPO adapter)
+      5. GRPO-from-Instruct  (instruct model + GRPO adapter)
+
+    Each model is loaded, evaluated, then unloaded before loading the next.
+    ``load_adapter()`` already accepts ``base_model_name`` so adapters 4 and 5
+    point to their correct base models.
+    """
+    ec = cfg.evaluation
+    results = {}
+
+    print("=" * 60)
+    print("  5-MODEL COMPARISON")
+    print("=" * 60)
+
+    # 1. Base
+    base_df, base_acc = evaluate_base_model(
+        cfg=cfg,
+        test_dataset=test_dataset,
+        num_samples=num_samples,
+        model_name="Base",
+    )
+    results["base_results"] = base_df
+    results["base_accuracy"] = base_acc
+
+    # 2. Instruct (load instruct model with no adapter)
+    from math_rl_tuning.model import load_model_and_tokenizer
+    instruct_cfg = cfg  # reuse cfg; override model name below
+    print(f"\nLoading instruct model: {cfg.model.instruct_name}")
+    instruct_model, instruct_tok = load_model_and_tokenizer(
+        cfg, stage="sft", inference=True, model_path=cfg.model.instruct_name
+    )
+    instruct_df, instruct_acc = evaluate_model(
+        model=instruct_model,
+        tokenizer=instruct_tok,
+        test_dataset=test_dataset,
+        num_samples=num_samples,
+        max_new_tokens=ec.max_new_tokens,
+        model_name="Instruct",
+        system_prompt=ec.system_prompt,
+        batch_size=ec.batch_size,
+    )
+    results["instruct_results"] = instruct_df
+    results["instruct_accuracy"] = instruct_acc
+    del instruct_model, instruct_tok
+    clean_memory(verbose=True)
+
+    # 3. SFT (base model + SFT adapter)
+    sft_df, sft_acc = evaluate_adapter(
+        adapter_path=sft_adapter_path,
+        test_dataset=test_dataset,
+        cfg=cfg,
+        num_samples=num_samples,
+        model_name="SFT",
+    )
+    results["sft_results"] = sft_df
+    results["sft_accuracy"] = sft_acc
+
+    # 4. GRPO-from-SFT (merged SFT model as base + GRPO adapter)
+    grpo_sft_df, grpo_sft_acc = evaluate_adapter(
+        adapter_path=grpo_from_sft_adapter_path,
+        test_dataset=test_dataset,
+        cfg=cfg,
+        num_samples=num_samples,
+        model_name="GRPO-from-SFT",
+        base_model_name=sft_merged_path,
+    )
+    results["grpo_from_sft_results"] = grpo_sft_df
+    results["grpo_from_sft_accuracy"] = grpo_sft_acc
+
+    # 5. GRPO-from-Instruct (instruct model as base + GRPO adapter)
+    grpo_instruct_df, grpo_instruct_acc = evaluate_adapter(
+        adapter_path=grpo_from_instruct_adapter_path,
+        test_dataset=test_dataset,
+        cfg=cfg,
+        num_samples=num_samples,
+        model_name="GRPO-from-Instruct",
+        base_model_name=cfg.model.instruct_name,
+    )
+    results["grpo_from_instruct_results"] = grpo_instruct_df
+    results["grpo_from_instruct_accuracy"] = grpo_instruct_acc
+
+    # Summary table
+    print("\n" + "=" * 60)
+    print("  RESULTS")
+    print("=" * 60)
+    print(f"Base:                {base_acc:.2%}")
+    print(f"Instruct:            {instruct_acc:.2%}  ({instruct_acc - base_acc:+.2%} vs Base)")
+    print(f"SFT:                 {sft_acc:.2%}  ({sft_acc - base_acc:+.2%} vs Base)")
+    print(f"GRPO-from-SFT:       {grpo_sft_acc:.2%}  ({grpo_sft_acc - sft_acc:+.2%} vs SFT)")
+    print(f"GRPO-from-Instruct:  {grpo_instruct_acc:.2%}  ({grpo_instruct_acc - instruct_acc:+.2%} vs Instruct)")
+
+    return results
+
+
+# ---------------------------------------------------------------------------
 # Save evaluation results
 # ---------------------------------------------------------------------------
+
+_ACCURACY_KEYS = [
+    "base_accuracy",
+    "instruct_accuracy",
+    "sft_accuracy",
+    "rl_accuracy",
+    "grpo_from_sft_accuracy",
+    "grpo_from_instruct_accuracy",
+]
+
+_RESULTS_KEYS = [
+    "base_results",
+    "instruct_results",
+    "sft_results",
+    "rl_results",
+    "grpo_from_sft_results",
+    "grpo_from_instruct_results",
+]
+
 
 def save_results(
     results: Dict,
@@ -438,19 +579,15 @@ def save_results(
     """Save evaluation results to disk as JSON and CSV."""
     os.makedirs(output_dir, exist_ok=True)
 
-    # Save summary
-    summary = {
-        k: results[k]
-        for k in ("base_accuracy", "sft_accuracy", "rl_accuracy")
-        if k in results
-    }
+    # Save summary (all accuracy keys present in results)
+    summary = {k: results[k] for k in _ACCURACY_KEYS if k in results}
     summary_path = os.path.join(output_dir, "summary.json")
     with open(summary_path, "w") as f:
         json.dump(summary, f, indent=2)
     print(f"Summary saved to: {summary_path}")
 
     # Save detailed results
-    for key in ["base_results", "sft_results", "rl_results"]:
+    for key in _RESULTS_KEYS:
         df = results.get(key)
         if df is not None:
             csv_path = os.path.join(output_dir, f"{key}.csv")

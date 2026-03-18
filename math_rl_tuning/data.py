@@ -347,6 +347,55 @@ def _prepare_grpo_numina(dc, gc):
 
 
 # ---------------------------------------------------------------------------
+# High-level convenience: prepare eval data from SFT training sources
+# ---------------------------------------------------------------------------
+
+def prepare_eval_from_sft_sources(cfg: Config) -> Dataset:
+    """
+    Build an evaluation dataset from the same sources used in SFT training.
+
+    Instead of the NuminaMath test split (which can be hard), this function
+    uses the validation portion held out during ``balanced_split()`` — same
+    sources and balance as SFT training data, but different examples.
+
+    This typically yields higher (more interpretable) accuracy numbers because
+    the distribution matches what the model was trained on.
+
+    Returns a HuggingFace Dataset with 'problem' and 'solution' columns.
+    """
+    dc = cfg.dataset
+
+    print("Loading NuminaMath train split for in-distribution eval...")
+    ds = load_numina_dataset(dc.name)
+    df = ds["train"].to_pandas()
+
+    # Filter to the same sources as SFT training
+    df = keep_sources(df, dc.sft_keep_sources)
+    print(f"Sources: {sorted(df['source'].unique())}")
+
+    # Reproduce the same balanced split as SFT training to get the val portion
+    _, val_df = balanced_split(
+        df,
+        train_per_source=dc.train_per_source,
+        val_per_source=dc.val_per_source,
+        random_state=dc.random_state,
+        per_source_overrides=getattr(dc, "train_per_source_overrides", None),
+    )
+
+    print(f"In-distribution eval set size: {len(val_df)}")
+    print(f"Sources: {sorted(val_df['source'].unique())}")
+
+    if len(val_df) < cfg.evaluation.num_samples:
+        print(
+            f"WARNING: Val set ({len(val_df)} examples) is smaller than "
+            f"evaluation.num_samples ({cfg.evaluation.num_samples}). "
+            f"All {len(val_df)} examples will be used."
+        )
+
+    return Dataset.from_pandas(val_df)
+
+
+# ---------------------------------------------------------------------------
 # High-level convenience: prepare test data
 # ---------------------------------------------------------------------------
 

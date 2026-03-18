@@ -46,6 +46,8 @@ class PathsConfig:
     sft_output_dir: str = "./outputs/sft"
     sft_merged_dir: str = "./outputs/sft_merged"
     grpo_output_dir: str = "./outputs/grpo"
+    grpo_from_sft_output_dir: str = "./outputs/grpo_from_sft"
+    grpo_from_instruct_output_dir: str = "./outputs/grpo_from_instruct"
     eval_output_dir: str = "./outputs/eval"
     drive_mount: str = "/content/drive"
     drive_save_dir: str = "/content/drive/MyDrive/math-rl-tuning"
@@ -54,6 +56,7 @@ class PathsConfig:
 @dataclass
 class ModelConfig:
     name: str = "Qwen/Qwen2.5-Math-7B"
+    instruct_name: str = "Qwen/Qwen2.5-Math-7B-Instruct"
     max_seq_length: int = 2048
 
 

@@ -11,6 +11,10 @@ paths:
   sft_merged_dir: "./outputs/sft_merged"
   # Where to save GRPO/RL training outputs
   grpo_output_dir: "./outputs/grpo"
+  # GRPO trained on top of SFT model
+  grpo_from_sft_output_dir: "./outputs/grpo_from_sft"
+  # GRPO trained on top of instruct model (no SFT step)
+  grpo_from_instruct_output_dir: "./outputs/grpo_from_instruct"
   # Where to save evaluation results (JSON/CSV)
   eval_output_dir: "./outputs/eval"
   # Google Drive mount point (used only in Colab)
@@ -21,6 +25,7 @@ paths:
 # --- Base Model ---
 model:
   name: "Qwen/Qwen2.5-Math-7B"
+  instruct_name: "Qwen/Qwen2.5-Math-7B-Instruct"
   max_seq_length: 2048
 
 # --- Quantization (QLoRA / BitsAndBytes) ---

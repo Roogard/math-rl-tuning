@@ -134,17 +134,33 @@ def run_grpo_training(
     grpo_dataset: Optional[Dataset] = None,
     save_to_drive: bool = False,
     checkpoint_path: Optional[str] = None,
+    skip_sft_merge: bool = False,
 ) -> Tuple:
-    """Run the full GRPO pipeline."""
-    sft_path = sft_adapter_path or cfg.paths.sft_output_dir
+    """Run the full GRPO pipeline.
+
+    Args:
+        skip_sft_merge: If True, skip Phase 1 (SFT adapter merge) and load
+            the instruct model (cfg.model.instruct_name) directly. Use this
+            for GRPO training starting from the instruct model instead of SFT.
+    """
     patch_colab_fileno()
 
-    # --- Phase 1: Merge SFT adapter ---
-    print("=" * 60)
-    print("PHASE 1: Merge SFT Adapter")
-    print("=" * 60)
-    merged_path = merge_adapter(cfg, adapter_path=sft_path)
-    patch_vocab_size(merged_path)
+    if not skip_sft_merge:
+        # --- Phase 1: Merge SFT adapter ---
+        print("=" * 60)
+        print("PHASE 1: Merge SFT Adapter")
+        print("=" * 60)
+        sft_path = sft_adapter_path or cfg.paths.sft_output_dir
+        merged_path = merge_adapter(cfg, adapter_path=sft_path)
+        patch_vocab_size(merged_path)
+        model_to_load = merged_path
+    else:
+        # --- Phase 1: Skipped — start from instruct model directly ---
+        print("=" * 60)
+        print("PHASE 1: Skipped (starting from instruct model)")
+        print("=" * 60)
+        model_to_load = cfg.model.instruct_name
+        print(f"Will load instruct model: {model_to_load}")
 
     # --- Phase 2: Load for RL ---
     print("\n" + "=" * 60)
@@ -155,13 +171,13 @@ def run_grpo_training(
     if HAS_UNSLOTH:
         print("Using Unsloth FastLanguageModel")
         model, tokenizer = load_unsloth_model(
-            cfg, model_path=merged_path, for_training=True,
+            cfg, model_path=model_to_load, for_training=True,
             max_seq_length=grpo_seq_len,
         )
     else:
         print("Unsloth not available — using standard HuggingFace")
         model, tokenizer = load_model_and_tokenizer(
-            cfg, stage="grpo", model_path=merged_path
+            cfg, stage="grpo", model_path=model_to_load
         )
 
     # Ensure warnings_issued exists (TRL's GRPOTrainer uses it as a dict)

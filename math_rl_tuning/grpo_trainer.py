@@ -22,13 +22,28 @@ import os
 from collections import defaultdict
 from typing import Optional, Tuple
 
-from trl import GRPOTrainer, GRPOConfig
+# Import TRL's GRPOTrainer BEFORE unsloth to save the original class.
+# Unsloth's import replaces trl.GRPOTrainer with UnslothGRPOTrainer which
+# has a known tensor-shape bug in compute_loss (completion_mask size mismatch).
+from trl import GRPOTrainer as _OriginalGRPOTrainer, GRPOConfig
 from transformers import TrainerCallback
 from datasets import Dataset
+
+# Now import unsloth for FastLanguageModel (model loading optimizations).
+# This will monkey-patch trl.GRPOTrainer, but we already saved the original.
+try:
+    from unsloth import FastLanguageModel
+    HAS_UNSLOTH = True
+except ImportError:
+    HAS_UNSLOTH = False
+
+# Use the original TRL GRPOTrainer to avoid Unsloth's buggy compiled version
+GRPOTrainer = _OriginalGRPOTrainer
 
 from math_rl_tuning.config import Config
 from math_rl_tuning.model import (
     merge_adapter,
+    load_model_and_tokenizer,
     load_unsloth_model,
     patch_vocab_size,
 )
@@ -153,11 +168,17 @@ def run_grpo_training(
     # Total sequence length = prompt + completion.
     # Unsloth uses a fixed-size KV cache, so it needs the combined length upfront.
     grpo_seq_len = gc.max_prompt_length + gc.max_completion_length
-    model, tokenizer = load_unsloth_model(
-        cfg, model_path=merged_path, for_training=True,
-        max_seq_length=grpo_seq_len,
-    )
-    model.config.use_cache = False
+    if HAS_UNSLOTH:
+        print("Using Unsloth FastLanguageModel")
+        model, tokenizer = load_unsloth_model(
+            cfg, model_path=merged_path, for_training=True,
+            max_seq_length=grpo_seq_len,
+        )
+    else:
+        print("Unsloth not available — using standard HuggingFace")
+        model, tokenizer = load_model_and_tokenizer(
+            cfg, stage="grpo", model_path=merged_path
+        )
 
     # Ensure warnings_issued exists (TRL's GRPOTrainer uses it as a dict)
     if not hasattr(model, "warnings_issued"):

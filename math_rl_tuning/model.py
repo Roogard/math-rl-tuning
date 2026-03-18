@@ -307,6 +307,11 @@ def load_unsloth_model(
     Returns:
         (model, tokenizer)
     """
+    # Unsloth's fast generation kernel has a rotary embedding shape mismatch
+    # with transformers 5.x (position_ids shaped for full sequence instead of
+    # single token during autoregressive decoding). Disable it to fall back to
+    # standard HuggingFace generate.
+    os.environ["UNSLOTH_DISABLE_FAST_GENERATION"] = "1"
     from unsloth import FastLanguageModel
 
     lc = cfg.lora.grpo

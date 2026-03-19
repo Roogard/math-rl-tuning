@@ -125,6 +125,8 @@ def build_grpo_config(cfg: Config):
         optim=gc.optim,
         adam_beta1=gc.adam_beta1,
         adam_beta2=gc.adam_beta2,
+        use_vllm=gc.use_vllm,
+        vllm_gpu_memory_utilization=gc.vllm_gpu_memory_utilization,
     )
 
 

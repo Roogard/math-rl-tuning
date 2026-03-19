@@ -122,6 +122,8 @@ grpo_training:
   save_strategy: "steps"
   save_steps: 50
   save_total_limit: 3
+  use_vllm: true
+  vllm_gpu_memory_utilization: 0.35
 
 rewards:
   # points for correct answer (positive signal)

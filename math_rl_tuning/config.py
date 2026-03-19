@@ -174,6 +174,8 @@ class GRPOTrainingConfig:
     save_strategy: str = "steps"
     save_steps: int = 50
     save_total_limit: int = 3
+    use_vllm: bool = False
+    vllm_gpu_memory_utilization: float = 0.35
 
 
 @dataclass

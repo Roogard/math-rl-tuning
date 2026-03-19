@@ -119,11 +119,12 @@ def _start_vllm_server(model_path: str, gpu_memory_utilization: float, port: int
             "--port", str(port),
         ],
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stderr=None,  # show server errors in notebook output
     )
 
     url = f"http://0.0.0.0:{port}/health/"
-    deadline = time.time() + 300  # 5-minute timeout
+    timeout = 600  # 10 minutes — 7B model takes 3-8 min to load in bf16
+    deadline = time.time() + timeout
     attempt = 0
     while time.time() < deadline:
         try:
@@ -132,15 +133,16 @@ def _start_vllm_server(model_path: str, gpu_memory_utilization: float, port: int
             return proc
         except urllib.error.URLError:
             if attempt % 6 == 0:
-                elapsed = int(time.time() - (deadline - 300))
-                print(f"  Waiting for vLLM server... ({elapsed}s)")
+                elapsed = int(time.time() - (deadline - timeout))
+                print(f"  Waiting for vLLM server... ({elapsed}s elapsed, up to {timeout}s)")
             time.sleep(5)
             attempt += 1
 
     proc.terminate()
     raise RuntimeError(
-        "vLLM server failed to start within 5 minutes. "
-        "Check that vllm==0.12.0 is installed: !pip install vllm==0.12.0"
+        f"vLLM server failed to start within {timeout}s. "
+        "Check the stderr output above for errors. "
+        "Ensure vllm==0.12.0 is installed: !pip install vllm==0.12.0"
     )
 
 

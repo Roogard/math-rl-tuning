@@ -126,7 +126,7 @@ def load_model_and_tokenizer(
         quantization_config=bnb_config,
         device_map="auto",
         use_cache=inference,  # KV-cache speeds up inference but wastes VRAM during training
-        attn_implementation="flash_attention_2",  # 2-4x less VRAM, faster attention on A100
+        attn_implementation="sdpa",  # PyTorch 2.0+ built-in; dispatches to flash kernels on CUDA, no extra install
     )
 
     # Resize embeddings if we added tokens

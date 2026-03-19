@@ -20,7 +20,6 @@ Standard HF + QLoRA loading works reliably with all TRL/transformers versions.
 """
 
 import os
-import inspect
 from collections import defaultdict
 from typing import Optional, Tuple
 
@@ -109,7 +108,6 @@ def build_grpo_config(cfg: Config):
         per_device_train_batch_size=gc.per_device_train_batch_size,
         gradient_accumulation_steps=gc.gradient_accumulation_steps,
         num_generations=gc.num_generations,
-        max_prompt_length=gc.max_prompt_length,
         max_completion_length=gc.max_completion_length,
         num_train_epochs=gc.num_train_epochs,
         report_to=gc.report_to,

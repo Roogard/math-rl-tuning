@@ -20,7 +20,8 @@ setup(
         "datasets>=3.0.0",
         "accelerate>=1.4.0",
         "peft>=0.7.1",            # LoRA / QLoRA adapter management
-        "trl>=0.26.2",            # 0.26.2+ defers llm_blender import (PR #4598)
+        "trl>=0.29.0",            # 0.29.0+ supports vllm_mode="colocate" (inline vLLM)
+        "vllm>=0.8.0",            # vLLM generation backend for GRPO
         "bitsandbytes>=0.45.5",   # 4-bit NF4 quantization (QLoRA)
         "safetensors>=0.4.3",     # Fast, safe model weight serialization
         "sentencepiece>=0.2.0",   # Tokenizer dependency for Qwen2.5
@@ -37,11 +38,6 @@ setup(
         "huggingface-hub>=0.21.0",
     ],
     extras_require={
-        # Optional: Unsloth + vLLM for faster GRPO training with speculative decoding
-        "unsloth": [
-            "unsloth",
-            "vllm",
-        ],
         # Optional: visualization for reward curves and evaluation results
         "viz": [
             "matplotlib>=3.7.0",

@@ -175,7 +175,10 @@ class GRPOTrainingConfig:
     save_steps: int = 50
     save_total_limit: int = 3
     use_vllm: bool = False
-    vllm_gpu_memory_utilization: float = 0.35
+    vllm_mode: str = "colocate"              # "colocate" runs vLLM in-process (no server)
+    vllm_gpu_memory_utilization: float = 0.15  # Lower for colocate (shares GPU with training)
+    vllm_enable_sleep_mode: bool = True      # Offload vLLM weights during backward pass
+    vllm_max_model_length: int = 2048        # Max context length for vLLM engine
 
 
 @dataclass

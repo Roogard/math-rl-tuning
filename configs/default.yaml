@@ -123,7 +123,10 @@ grpo_training:
   save_steps: 50
   save_total_limit: 3
   use_vllm: true
-  vllm_gpu_memory_utilization: 0.35
+  vllm_mode: "colocate"
+  vllm_gpu_memory_utilization: 0.15
+  vllm_enable_sleep_mode: true
+  vllm_max_model_length: 2048
 
 rewards:
   # points for correct answer (positive signal)

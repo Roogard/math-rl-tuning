@@ -174,6 +174,7 @@ class GRPOTrainingConfig:
     save_strategy: str = "steps"
     save_steps: int = 50
     save_total_limit: int = 3
+    gradient_checkpointing: bool = False
     use_vllm: bool = False
     vllm_mode: str = "colocate"              # "colocate" runs vLLM in-process (no server)
     vllm_gpu_memory_utilization: float = 0.15  # Lower for colocate (shares GPU with training)

@@ -108,7 +108,7 @@ grpo_training:
   weight_decay: 0.1
   lr_scheduler_type: "cosine"
   optim: "adamw_torch_fused"
-  per_device_train_batch_size: 48   # training_1.3: 5000/64 = 78 steps total
+  per_device_train_batch_size: 32   # training_1.3: 5000/64 = 78 steps total
   gradient_accumulation_steps: 1
   num_generations: 4
   max_prompt_length: 256

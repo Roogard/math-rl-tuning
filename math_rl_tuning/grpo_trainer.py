@@ -113,8 +113,6 @@ def build_grpo_config(cfg: Config):
         report_to=gc.report_to,
         fp16=not use_bf16,
         bf16=use_bf16,
-        gradient_checkpointing=True,
-        gradient_checkpointing_kwargs={"use_reentrant": False},
         beta=gc.beta,
         warmup_ratio=gc.warmup_ratio,
         weight_decay=gc.weight_decay,

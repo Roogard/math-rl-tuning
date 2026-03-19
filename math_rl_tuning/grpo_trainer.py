@@ -20,6 +20,10 @@ Standard HF + QLoRA loading works reliably with all TRL/transformers versions.
 """
 
 import os
+import subprocess
+import time
+import urllib.request
+import urllib.error
 from collections import defaultdict
 from typing import Optional, Tuple
 
@@ -97,6 +101,49 @@ class RewardLoggingCallback(TrainerCallback):
         plt.show()
 
 
+def _start_vllm_server(model_path: str, gpu_memory_utilization: float, port: int = 8000):
+    """
+    Launch a TRL vLLM generation server as a background subprocess.
+
+    TRL's GRPOTrainer with use_vllm=True acts as a CLIENT — it expects the server
+    to already be running. This function starts it before training begins.
+    Must be called BEFORE loading the training model so vLLM can reserve its
+    GPU memory first.
+    """
+    print(f"Starting vLLM generation server (gpu_mem_util={gpu_memory_utilization}, port={port})...")
+    proc = subprocess.Popen(
+        [
+            "trl", "vllm-serve",
+            "--model", model_path,
+            "--gpu-memory-utilization", str(gpu_memory_utilization),
+            "--port", str(port),
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    url = f"http://0.0.0.0:{port}/health/"
+    deadline = time.time() + 300  # 5-minute timeout
+    attempt = 0
+    while time.time() < deadline:
+        try:
+            urllib.request.urlopen(url, timeout=2)
+            print("vLLM server is ready.")
+            return proc
+        except urllib.error.URLError:
+            if attempt % 6 == 0:
+                elapsed = int(time.time() - (deadline - 300))
+                print(f"  Waiting for vLLM server... ({elapsed}s)")
+            time.sleep(5)
+            attempt += 1
+
+    proc.terminate()
+    raise RuntimeError(
+        "vLLM server failed to start within 5 minutes. "
+        "Check that vllm==0.12.0 is installed: !pip install vllm==0.12.0"
+    )
+
+
 def build_grpo_config(cfg: Config):
     """Create a TRL GRPOConfig from the project configuration."""
     gc = cfg.grpo_training
@@ -147,6 +194,15 @@ def run_grpo_training(
     print("=" * 60)
     merged_path = merge_adapter(cfg, adapter_path=sft_path)
     patch_vocab_size(merged_path)
+
+    # Start vLLM server BEFORE loading the training model so it can reserve
+    # its GPU memory first (vllm_gpu_memory_utilization fraction of total VRAM).
+    vllm_proc = None
+    if cfg.grpo_training.use_vllm:
+        vllm_proc = _start_vllm_server(
+            merged_path,
+            gpu_memory_utilization=cfg.grpo_training.vllm_gpu_memory_utilization,
+        )
 
     # --- Phase 2: Load for RL ---
     print("\n" + "=" * 60)
@@ -205,5 +261,9 @@ def run_grpo_training(
 
     if save_to_drive:
         copy_to_drive(save_dir, "grpo", cfg)
+
+    if vllm_proc is not None:
+        print("Stopping vLLM server...")
+        vllm_proc.terminate()
 
     return trainer, model, tokenizer, reward_callback

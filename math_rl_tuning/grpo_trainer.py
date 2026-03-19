@@ -99,17 +99,11 @@ class RewardLoggingCallback(TrainerCallback):
 
 
 def build_grpo_config(cfg: Config):
-    """Create a TRL GRPOConfig from the project configuration.
-
-    Uses inspect.signature to filter kwargs to only those supported by the
-    installed TRL version — vLLM params are passed when available, silently
-    skipped when not (different TRL versions expose different GRPOConfig fields).
-    """
+    """Create a TRL GRPOConfig from the project configuration."""
     gc = cfg.grpo_training
     use_bf16 = is_bf16_supported()
-    sig = inspect.signature(GRPOConfig)
 
-    kwargs = dict(
+    return GRPOConfig(
         output_dir=cfg.paths.grpo_output_dir,
         learning_rate=gc.learning_rate,
         per_device_train_batch_size=gc.per_device_train_batch_size,
@@ -132,16 +126,7 @@ def build_grpo_config(cfg: Config):
         optim=gc.optim,
         adam_beta1=gc.adam_beta1,
         adam_beta2=gc.adam_beta2,
-        use_vllm=gc.use_vllm,
-        vllm_gpu_memory_utilization=gc.vllm_gpu_memory_utilization,
-        vllm_dtype=gc.vllm_dtype,
-        vllm_max_model_len=gc.vllm_max_model_len,
     )
-    supported = {k: v for k, v in kwargs.items() if k in sig.parameters}
-    skipped = [k for k in kwargs if k not in sig.parameters]
-    if skipped:
-        print(f"[GRPOConfig] Skipping unsupported kwargs for this TRL version: {skipped}")
-    return GRPOConfig(**supported)
 
 
 def run_grpo_training(

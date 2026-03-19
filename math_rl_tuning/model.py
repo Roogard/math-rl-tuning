@@ -21,10 +21,8 @@ from peft import (
 
 from math_rl_tuning.config import Config
 
-# ---------------------------------------------------------------------------
-# Patch transformers 4.47+/5.x bug: _set_model_specific_special_tokens receives
-# a list from saved Qwen tokenizer configs instead of the expected dict.
-# ---------------------------------------------------------------------------
+# Fix transformers 4.47+/5.x bug: _set_model_specific_special_tokens receives a list
+# from saved Qwen tokenizer configs instead of the expected dict.
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase as _PTB
 _orig_set_special = _PTB._set_model_specific_special_tokens
 def _patched_set_special(self, special_tokens):
@@ -138,7 +136,7 @@ def load_model_and_tokenizer(
         quantization_config=bnb_config,
         device_map="auto",
         use_cache=inference,  # KV-cache speeds up inference but wastes VRAM during training
-        attn_implementation="sdpa",  # PyTorch 2.0+ built-in; dispatches to flash kernels on CUDA, no extra install
+        attn_implementation="sdpa",  # PyTorch 2.0+ built-in flash-style attention, no extra install
     )
 
     # Resize embeddings if we added tokens

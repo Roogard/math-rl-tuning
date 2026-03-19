@@ -153,7 +153,7 @@ class GRPOTrainingConfig:
     warmup_ratio: float = 0.1
     weight_decay: float = 0.1
     lr_scheduler_type: str = "cosine"
-    optim: str = "adamw_torch_fused"
+    optim: str = "paged_adamw_8bit"
     per_device_train_batch_size: int = 1
     gradient_accumulation_steps: int = 4
     num_generations: int = 6     # How many completions to sample per prompt.
@@ -174,10 +174,6 @@ class GRPOTrainingConfig:
     save_strategy: str = "steps"
     save_steps: int = 50
     save_total_limit: int = 3
-    use_vllm: bool = False
-    vllm_gpu_memory_utilization: float = 0.3
-    vllm_dtype: str = "bfloat16"
-    vllm_max_model_len: int = 2560
 
 
 @dataclass

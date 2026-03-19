@@ -20,6 +20,7 @@ Standard HF + QLoRA loading works reliably with all TRL/transformers versions.
 """
 
 import os
+import inspect
 from collections import defaultdict
 from typing import Optional, Tuple
 
@@ -98,11 +99,17 @@ class RewardLoggingCallback(TrainerCallback):
 
 
 def build_grpo_config(cfg: Config):
-    """Create a TRL GRPOConfig from the project configuration."""
+    """Create a TRL GRPOConfig from the project configuration.
+
+    Uses inspect.signature to filter kwargs to only those supported by the
+    installed TRL version — vLLM params are passed when available, silently
+    skipped when not (different TRL versions expose different GRPOConfig fields).
+    """
     gc = cfg.grpo_training
     use_bf16 = is_bf16_supported()
+    sig = inspect.signature(GRPOConfig)
 
-    return GRPOConfig(
+    kwargs = dict(
         output_dir=cfg.paths.grpo_output_dir,
         learning_rate=gc.learning_rate,
         per_device_train_batch_size=gc.per_device_train_batch_size,
@@ -130,6 +137,11 @@ def build_grpo_config(cfg: Config):
         vllm_dtype=gc.vllm_dtype,
         vllm_max_model_len=gc.vllm_max_model_len,
     )
+    supported = {k: v for k, v in kwargs.items() if k in sig.parameters}
+    skipped = [k for k in kwargs if k not in sig.parameters]
+    if skipped:
+        print(f"[GRPOConfig] Skipping unsupported kwargs for this TRL version: {skipped}")
+    return GRPOConfig(**supported)
 
 
 def run_grpo_training(

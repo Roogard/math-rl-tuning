@@ -91,7 +91,7 @@ def _make_strict_format_reward(cfg: RewardsConfig):
     #   (?:\{[^{}]*\}[^{}]*)* — allow one level of nested braces (e.g. \boxed{\frac{1}{2}})
     #   \}                 — closing brace
     #   \s*\.?\s*$         — optional trailing period/space, then end of string
-    pattern = r"\\boxed\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}\s*\.?\s*$"
+    pattern = r"\\boxed\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}\s*\$?\s*\.?\s*$"
     def strict_format_reward_func(completions, **kwargs) -> list[float]:
         responses = [_get_content(c) for c in completions]
         return [

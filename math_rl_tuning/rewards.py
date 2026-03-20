@@ -121,6 +121,5 @@ def build_reward_functions(rewards_cfg: RewardsConfig = None):
     cfg = rewards_cfg or RewardsConfig()
     return [
         _make_boxed_format_reward(cfg),
-        _make_strict_format_reward(cfg),
         _make_correctness_reward(cfg),
     ]

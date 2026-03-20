@@ -108,15 +108,15 @@ grpo_training:
   weight_decay: 0.1
   lr_scheduler_type: "cosine"
   optim: "adamw_torch_fused"
-  per_device_train_batch_size: 15
+  per_device_train_batch_size: 12
   gradient_accumulation_steps: 2
   gradient_checkpointing: true
-  num_generations: 3
+  num_generations: 4
   max_prompt_length: 256
   max_completion_length: 1024
   num_train_epochs: 1
   report_to: "none"
-  beta: 0.01
+  beta: 0.04
   grpo_sample_size: 5000
   max_grad_norm: 0.1
   logging_steps: 1

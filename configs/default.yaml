@@ -108,10 +108,10 @@ grpo_training:
   weight_decay: 0.1
   lr_scheduler_type: "cosine"
   optim: "adamw_torch_fused"
-  per_device_train_batch_size: 15
-  gradient_accumulation_steps: 2
+  per_device_train_batch_size: 4
+  gradient_accumulation_steps: 8
   gradient_checkpointing: true
-  num_generations: 3
+  num_generations: 8
   max_prompt_length: 256
   max_completion_length: 1024
   num_train_epochs: 1
@@ -125,8 +125,8 @@ grpo_training:
   save_total_limit: 3
   use_vllm: true
   vllm_mode: "colocate"
-  vllm_gpu_memory_utilization: 0.10
-  vllm_enable_sleep_mode: false
+  vllm_gpu_memory_utilization: 0.40
+  vllm_enable_sleep_mode: true
   vllm_max_model_length: 2048
 
 rewards:

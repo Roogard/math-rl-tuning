@@ -23,20 +23,6 @@ import os
 from collections import defaultdict
 from typing import Optional, Tuple
 
-# Patch vLLM's set_weight_attrs to tolerate pre-existing bitsandbytes
-# attributes (e.g. bnb_quant_state) that are set during 4-bit quantization.
-# Without this, vLLM colocate mode asserts on "Overwriting existing tensor attribute".
-try:
-    import vllm.model_executor.utils as _vllm_utils
-    def _patched_set_weight_attrs(weight, weight_attrs):
-        if weight_attrs is None:
-            return
-        for key, value in weight_attrs.items():
-            setattr(weight, key, value)
-    _vllm_utils.set_weight_attrs = _patched_set_weight_attrs
-except ImportError:
-    pass
-
 from trl import GRPOTrainer, GRPOConfig
 from transformers import TrainerCallback
 from datasets import Dataset
